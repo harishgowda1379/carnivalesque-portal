@@ -1,5 +1,4 @@
-setuptools
-wheel
+
 Flask==2.3.3
 Flask-WTF==1.1.1
 Flask-Limiter==3.5.0
