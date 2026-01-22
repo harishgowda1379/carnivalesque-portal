@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wave Logo Loader</title>
+
+<style>
+    /* Reset */
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: transparent;
+    }
+
+    .loader {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* Responsive logo */
+    .logo {
+        width: min(70vw, 300px); /* scales on phone */
+        height: auto;
+        animation: wave 1.6s ease-in-out infinite;
+        will-change: transform, opacity;
+    }
+
+    /* Wave animation */
+    @keyframes wave {
+        0% {
+            transform: scale(0.92);
+            opacity: 0.65;
+        }
+        50% {
+            transform: scale(1.05);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(0.92);
+            opacity: 0.65;
+        }
+    }
+
+    /* Reduced motion support (accessibility) */
+    @media (prefers-reduced-motion: reduce) {
+        .logo {
+            animation: none;
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="loader">
+    <img src="logo.png" class="logo" alt="Logo">
+</div>
+
+</body>
+</html>

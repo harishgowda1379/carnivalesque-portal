@@ -1,0 +1,30 @@
+{
+    "SFCVL25017": {
+        "event": "IPL Auction",
+        "reported": true,
+        "event_started": true,
+        "event_ended": true,
+        "position": 1
+    },
+    "SFCVL25507": {
+        "team_override": [
+            "Sushmitha L",
+            "Abdiel Sain",
+            "Faizan khan",
+            "harish"
+        ]
+    },
+    "SFCVL25508": {
+        "event": "IPL Auction",
+        "team_override": [
+            "Lohit",
+            "Farwa",
+            "Monish Morres",
+            "harish"
+        ],
+        "reported": true,
+        "event_started": true,
+        "event_ended": true,
+        "position": 2
+    }
+}

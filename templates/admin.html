@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carnivalesque 26 - Admin Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Raleway:wght@200;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-purple: #35da88;
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --border-glow: rgba(42, 224, 88, 0.3);
+            --core-flare: rgba(186, 104, 255, 0.25);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Raleway', sans-serif;
+            background-color: #050505;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.8)), 
+                              url('/static/images/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* The Original Bottom Glow (The "Core") - Matching Portal */
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 400px;
+            background: radial-gradient(circle, var(--core-flare) 0%, transparent 70%);
+            filter: blur(60px);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .stars-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        .star { position: absolute; background: white; border-radius: 50%; opacity: 0.5; animation: twinkle var(--duration) infinite ease-in-out; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(1); } 50% { opacity: 1; transform: scale(1.4); } }
+
+        header {
+            position: relative;
+            z-index: 100;
+            padding: 30px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 95%;
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 60px 40px;
+            box-shadow: 0 0 100px rgba(0, 0, 0, 0.7);
+        }
+
+        h2 { 
+            font-family: 'Syncopate', sans-serif; 
+            text-transform: uppercase; 
+            letter-spacing: 10px; 
+            text-align: center; 
+            margin-bottom: 5px; 
+            font-size: 24px; 
+            text-shadow: 0 0 20px var(--neon-purple); 
+        }
+
+        .subtitle { 
+            text-align: center; 
+            color: rgba(255, 255, 255, 0.4); 
+            margin-bottom: 50px; 
+            font-size: 9px; 
+            text-transform: uppercase; 
+            letter-spacing: 5px; 
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 35px;
+            margin-bottom: 30px;
+        }
+
+        h3 {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 14px;
+            letter-spacing: 4px;
+            color: var(--neon-purple);
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+
+        /* Form Styling - Matching Portal Inputs */
+        .form-group { margin-bottom: 20px; }
+        label { 
+            display: block; 
+            font-size: 9px; 
+            text-transform: uppercase; 
+            letter-spacing: 2px; 
+            color: rgba(255,255,255,0.4); 
+            margin-bottom: 8px;
+        }
+
+        select {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-family: 'Raleway', sans-serif;
+            letter-spacing: 2px;
+            outline: none;
+            transition: 0.3s;
+        }
+        select:focus { border-color: var(--neon-purple); }
+
+        .checkbox-group {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            color: rgba(255,255,255,0.7);
+        }
+        .checkbox-label:hover { background: rgba(186, 104, 255, 0.1); color: #fff; }
+        input[type="checkbox"] { accent-color: var(--neon-purple); }
+
+        button {
+            width: 100%;
+            padding: 20px;
+            background: transparent;
+            border: 1px solid var(--neon-purple);
+            color: var(--neon-purple);
+            font-family: 'Raleway', sans-serif;
+            font-weight: 700;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.4s;
+            margin-top: 10px;
+        }
+        button:hover:not(:disabled) { background: var(--neon-purple); color: #000; box-shadow: 0 0 30px var(--border-glow); }
+        button:disabled { opacity: 0.3; }
+
+        #mapSuccess {
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid var(--neon-purple);
+            background: rgba(186, 104, 255, 0.1);
+            color: var(--neon-purple);
+            text-align: center;
+            font-size: 11px;
+            letter-spacing: 2px;
+            display: none;
+        }
+
+        .event-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 25px;
+        }
+        .event-title { font-family: 'Syncopate', sans-serif; font-size: 12px; color: var(--neon-purple); margin-bottom: 15px; letter-spacing: 2px; }
+        
+        .status-badge {
+            display: inline-block;
+            font-size: 8px;
+            letter-spacing: 2px;
+            padding: 4px 10px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+        .not-started { border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.5); }
+        .started { border: 1px solid #f39c12; color: #f39c12; }
+        .locked { border: 1px solid #e74c3c; color: #e74c3c; }
+
+        .winners-section strong { font-size: 9px; letter-spacing: 1px; color: rgba(255,255,255,0.4); display: block; margin-bottom: 10px; text-transform: uppercase; }
+        .winner-item { font-size: 12px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.03); color: #ddd; }
+
+        .loading { text-align: center; font-size: 10px; letter-spacing: 4px; color: var(--neon-purple); padding: 40px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="stars-container" id="stars"></div>
+
+    <header>
+        <h2>ADMIN CONTROL</h2>
+        <p class="subtitle">System Configuration & Live Monitor</p>
+    </header>
+
+    <div class="container">
+
+        <div class="card">
+            <h3>Field Mapping</h3>
+            <div class="form-group">
+                <label>Registration Number</label>
+                <select id="regCol"><option value="">Scanning Columns...</option></select>
+            </div>
+            <div class="form-group">
+                <label>Event Category</label>
+                <select id="eventCol"><option value="">Scanning Columns...</option></select>
+            </div>
+            <div class="form-group">
+                <label>College Institution</label>
+                <select id="collegeCol"><option value="">Scanning Columns...</option></select>
+            </div>
+            <div class="form-group">
+                <label>Team Lead / Representative</label>
+                <select id="leaderCol"><option value="">Scanning Columns...</option></select>
+            </div>
+            <div class="form-group">
+                <label>Sub-Member Columns</label>
+                <div class="checkbox-group" id="memberCols">
+                    <div class="loading">AWAITING SYNC...</div>
+                </div>
+            </div>
+            <button onclick="saveMapping()" id="saveBtn">Save Configuration</button>
+            <div id="mapSuccess"></div>
+        </div>
+
+
+    </div>
+
+    <script>
+        // Stars Generation
+        const starsContainer = document.getElementById('stars');
+        for (let i = 0; i < 100; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 2 + 'px';
+            star.style.width = size; star.style.height = size;
+            star.style.top = Math.random() * 100 + '%';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.setProperty('--duration', Math.random() * 3 + 2 + 's');
+            starsContainer.appendChild(star);
+        }
+
+        // Logic for fetching columns
+        fetch("/get_excel_columns")
+            .then(res => res.json())
+            .then(cols => {
+                if (!cols || cols.length === 0) return;
+                ["regCol", "eventCol", "collegeCol", "leaderCol"].forEach(id => {
+                    const sel = document.getElementById(id);
+                    sel.innerHTML = "<option value=''>Select Column...</option>";
+                    cols.forEach(c => {
+                        const opt = document.createElement("option");
+                        opt.value = c; opt.innerText = c;
+                        sel.appendChild(opt);
+                    });
+                });
+                const memberBox = document.getElementById("memberCols");
+                memberBox.innerHTML = "";
+                cols.forEach(c => {
+                    const lbl = document.createElement("label");
+                    lbl.className = "checkbox-label";
+                    lbl.innerHTML = `<input type="checkbox" value="${c}"> <span>${c}</span>`;
+                    memberBox.appendChild(lbl);
+                });
+            });
+
+        function saveMapping() {
+            const data = {
+                reg_no: document.getElementById("regCol").value,
+                event: document.getElementById("eventCol").value,
+                college: document.getElementById("collegeCol").value,
+                team_leader: document.getElementById("leaderCol").value,
+                team_members: Array.from(document.querySelectorAll("#memberCols input:checked")).map(cb => cb.value)
+            };
+
+            const btn = document.getElementById("saveBtn");
+            btn.innerText = "UPLOADING...";
+            btn.disabled = true;
+
+            fetch("/save_column_map", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(data)
+            }).then(() => {
+                btn.innerText = "Save Configuration";
+                btn.disabled = false;
+                document.getElementById("mapSuccess").style.display = "block";
+                document.getElementById("mapSuccess").innerText = "SYSTEM UPDATED";
+                setTimeout(() => document.getElementById("mapSuccess").style.display = "none", 3000);
+            });
+        }
+
+    </script>
+</body>
+</html>

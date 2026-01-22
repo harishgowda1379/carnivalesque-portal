@@ -1,0 +1,92 @@
+==================================================
+   EVENT ACCESS CODES - REFERENCE DOCUMENT
+==================================================
+
+This file contains all event access codes for coordinators.
+Each event has a unique 6-character alphanumeric code.
+
+INSTRUCTIONS:
+-----------
+1. Coordinators can access events by entering the code on the coordinator dashboard
+2. Codes are case-insensitive (you can enter uppercase or lowercase)
+3. Codes are defined in app.py (DEFAULT_EVENT_CODES) and saved in data/event_codes.json
+4. All events have been assigned codes automatically
+
+==================================================
+          ALL EVENTS - ACCESS CODES
+==================================================
+
+Event Name                          | Access Code
+------------------------------------|------------
+IPL Auction                         | IPLAUC
+Synergy Squad                       | SYNSQD
+Decrypt-X                           | DECRYX
+Treasure Hunt                       | TRESHT
+Murder Mystery                      | MURMYS
+Film Quiz Challenge                 | FILMQZ
+Mime                                | MIMEE
+Mono Act                            | MONACT
+Group Dance                         | GRPDNC
+Duet Dance                          | DUETDC
+Solo Dance                          | SOLODC
+Dance Battle                        | DNCBTL
+Solo Singing                        | SOLOSG
+Group Singing                       | GRPSNG
+Solo Instrumental                   | SOLINS
+Battle of Bands                     | BATBND
+Face Painting                       | FACEPT
+Pencil Sketching                    | PENSKT
+Mehendi                             | MEHEND
+Reel Making                         | REELMK
+Photography                         | PHOTOG
+Cosplay                             | COSPLY
+
+==================================================
+
+TOTAL EVENTS: 22
+
+CODE RULES:
+----------
+✓ 6 characters long (exactly)
+✓ Alphanumeric (A-Z, 0-9)
+✓ Case-insensitive when entering (system converts to uppercase)
+✓ Should be entered exactly as shown above
+
+USAGE INSTRUCTIONS:
+------------------
+1. Open Coordinator Dashboard
+2. Click on the event you want to access
+3. Enter the 6-character code from this reference
+4. Codes are case-insensitive (e.g., "iplauc" = "IPLAUC")
+
+SECURITY:
+--------
+- Share codes securely with authorized coordinators only
+- Codes are stored in data/event_codes.json
+- Can be viewed in Admin Dashboard
+
+TROUBLESHOOTING:
+---------------
+If code doesn't work:
+- Verify event name matches exactly (including spaces, hyphens, etc.)
+- Ensure code is exactly 6 characters (some may be less, padded if needed)
+- Check for typos
+- Contact admin if issue persists
+
+SPECIAL NOTES:
+-------------
+- All codes are 6 characters
+- Codes are automatically validated and saved
+
+FILE LOCATIONS:
+--------------
+- Code definitions: app.py (DEFAULT_EVENT_CODES)
+- Saved codes: data/event_codes.json
+- Reference: EVENT_CODES_REFERENCE.txt (this file)
+
+Last Updated: 2024
+Generated: System initialization
+
+==================================================
+For questions or issues, contact system administrator.
+==================================================

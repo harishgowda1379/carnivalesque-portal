@@ -1,0 +1,12 @@
+{
+    "reg_no": "Registration No",
+    "event": "Event Name",
+    "college": "College Name",
+    "team_leader": "Name of Team Leader",
+    "team_members": [
+        "Student 2",
+        "Student 3",
+        "Student 4",
+        "Student 5"
+    ]
+}
