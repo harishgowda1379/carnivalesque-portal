@@ -1,3 +1,5 @@
+setuptools
+wheel
 Flask==2.3.3
 Flask-WTF==1.1.1
 Flask-Limiter==3.5.0
@@ -8,3 +10,4 @@ pandas==2.0.3
 openpyxl==3.1.2
 Werkzeug==2.3.7
 qrcode[pil]==7.4.2
+gunicorn==21.2.0
