@@ -50,120 +50,95 @@ USERS = {
 
 # Event Team Requirements (Min/Max team members)
 EVENT_TEAM_REQUIREMENTS = {
-    # Commerce
-    "IPL Auction": {"min": 3, "max": 3},
-    # Management
-    "Synergy Squad": {"min": 3, "max": 3},
-    # Computer Science
-    "Decrypt-X": {"min": 2, "max": 2},
-    # Arts
-    "Treasure Hunt": {"min": 3, "max": 3},
-    # Science
-    "Murder Mystery": {"min": 4, "max": 4},
-    # Languages
-    "Film Quiz": {"min": 3, "max": 3},
-    "Film Quiz Challenge": {"min": 3, "max": 3},
-    # Theatre
-    "Mime": {"min": 6, "max": 8},
-    "Mono Act": {"min": 1, "max": 1},
-    # Dance
-    "Group Dance": {"min": 6, "max": 8},
-    "Duet Dance": {"min": 2, "max": 2},
-    "Solo Dance": {"min": 1, "max": 1},
-    "Dance Battle": {"min": 1, "max": 1},
-    # Music
-    "Solo Singing": {"min": 1, "max": 1},
-    "Group Singing": {"min": 6, "max": 8},
-    "Solo Instrumental": {"min": 1, "max": 1},
-    "Battle of Bands": {"min": 8, "max": 10},
-    # Art
-    "Face Painting": {"min": 1, "max": 1},
-    "Pencil Sketching": {"min": 1, "max": 1},
-    "Mehendi": {"min": 1, "max": 1},
-    # Media
-    "Reel Making": {"min": 2, "max": 2},
-    "Photography": {"min": 1, "max": 1},
-    "Cosplay": {"min": 1, "max": 1},
-    # Fashion
+    # 5 Star Events
     "Fashion Walk": {"min": 10, "max": 12},
-    # Sports - Men
     "Football - Men": {"min": 7, "max": 12},
-    "Throw Ball - Men": {"min": 9, "max": 12},
-    "Kabaddi - Men": {"min": 7, "max": 12},
-    "Tug of War - Men": {"min": 8, "max": 10},
-    "Kho Kho - Men": {"min": 9, "max": 12},
+    
+    # 4 Star Events
+    "Battle of Bands": {"min": 8, "max": 10},
+    "Group Dance": {"min": 8, "max": 10},
+    "Throw Ball - M&W": {"min": 9, "max": 12},
+    "Kabaddi - M&W": {"min": 7, "max": 12},
+    "Tug of War - M&W": {"min": 8, "max": 10},
     "Volley Ball - Men": {"min": 6, "max": 9},
-    "Carrom (Men)": {"min": 1, "max": 1},
-    # Sports - Women
-    "Throw Ball - Women": {"min": 9, "max": 12},
-    "Kabaddi - Women": {"min": 7, "max": 12},
-    "Tug of War - Women": {"min": 8, "max": 10},
-    "Kho Kho - Women": {"min": 9, "max": 12},
-    "Carrom (Women)": {"min": 1, "max": 1},
-    # Mixed
-    "Chess - Mixed": {"min": 1, "max": 1},
-    # E-Sports
-    "FC26": {"min": 1, "max": 1},
+    "Group Singing": {"min": 6, "max": 8},
+    "Mime": {"min": 6, "max": 8},
+    
+    # 2 Star Events
+    "IPL Auction": {"min": 3, "max": 3},
+    "Synergy Squad": {"min": 3, "max": 3},
+    "Decrypt-X": {"min": 2, "max": 2},
+    "Treasure Hunt": {"min": 3, "max": 3},
+    "Murder Mystery": {"min": 4, "max": 4},
+    "Film Quiz": {"min": 3, "max": 3},
+    "DANCE BATTLE": {"min": 1, "max": 1},
+    "Duet Dance": {"min": 2, "max": 2},
+    "Cosplay": {"min": 1, "max": 1},
+    "Reel Making": {"min": 2, "max": 2},
     "BGMI": {"min": 4, "max": 4},
     "COD Mobile": {"min": 4, "max": 4},
-    "FC26 EA SPORTS": {"min": 1, "max": 1},
+    
+    # 1 Star Events
+    "Solo Singing": {"min": 1, "max": 1},
+    "Solo Instrumental": {"min": 1, "max": 1},
+    "Solo Dance": {"min": 1, "max": 1},
+    "Mono Act": {"min": 1, "max": 1},
+    "Mehendi": {"min": 1, "max": 1},
+    "Face Painting": {"min": 1, "max": 1},
+    "Pencil Sketching": {"min": 1, "max": 1},
+    "Photography": {"min": 1, "max": 1},
+    "SHORT FILM REVIEW": {"min": 1, "max": 1},
+    "JAM - JUST A MINUTE": {"min": 1, "max": 1},
+    "Carrom -  M&W": {"min": 1, "max": 1},
+    "Chess - M&W": {"min": 1, "max": 1},
+    "FC26": {"min": 1, "max": 1}
 }
 
 # Default Event Access Codes (6-character alphanumeric)
-# Event codes for all events
+# Event codes for all events (matching user's exact list)
 DEFAULT_EVENT_CODES = {
-    # Cultural Events
+    # 5 Star Events
+    "Fashion Walk": "FASHWK",
+    "Football - Men": "FTBMEN",
+    
+    # 4 Star Events
+    "Battle of Bands": "BATBND",
+    "Group Dance": "GRPDNC",
+    "Throw Ball - M&W": "THBLLM",
+    "Kabaddi - M&W": "KABDMW",
+    "Tug of War - M&W": "TUGWMW",
+    "Volley Ball - Men": "VOLBMN",
+    "Group Singing": "GRPSNG",
+    "Mime": "MIME",
+    
+    # 2 Star Events
     "IPL Auction": "IPLAUC",
     "Synergy Squad": "SYNSQD",
     "Decrypt-X": "DECRYX",
     "Treasure Hunt": "TRESHT",
     "Murder Mystery": "MURMYS",
     "Film Quiz": "FILMQZ",
-    "Mime": "MIMEE",
-    "Mono Act": "MONACT",
-    "Fashion Walk": "FASHWK",
-    "Cosplay": "COSPLY",
-
-    # Music & Dance
-    "Solo Singing": "SOLOSG",
-    "Group Singing": "GRPSNG",
-    "Solo Instrumental": "SOLINS",
-    "Battle of Bands": "BATBND",
-    "Solo Dance": "SOLODC",
-    "Group Dance": "GRPDNC",
+    "DANCE BATTLE": "DNCBTL",
     "Duet Dance": "DUETDC",
-    "Dance Battle": "DNCBTL",
-
-    # Art Events
+    "Cosplay": "COSPLY",
+    "Reel Making": "REELMK",
+    "BGMI": "BGMIES",
+    "COD Mobile": "CODMBL",
+    
+    # 1 Star Events
+    "Solo Singing": "SOLOSG",
+    "Solo Instrumental": "SOLINS",
+    "Solo Dance": "SOLODC",
+    "Mono Act": "MONACT",
     "Mehendi": "MEHEND",
     "Face Painting": "FACEPT",
     "Pencil Sketching": "PENSKT",
-    "Reel Making": "REELMK",
     "Photography": "PHOTOG",
-
-    # Sports – Men
-    "Football - Men": "FTBMEN",
-    "Throw Ball - Men": "THBMEN",
-    "Kabaddi - Men": "KBDMEN",
-    "Tug of War - Men": "TGWMEN",
-    "Kho Kho - Men": "KHKMEN",
-    "Volley Ball - Men": "VLBMEN",
-    "Carrom (Men)": "CARMEN",
-
-    # Sports – Women
-    "Throw Ball - Women": "THBWOM",
-    "Kabaddi - Women": "KBDWOM",
-    "Tug of War - Women": "TGWWOM",
-    "Kho Kho - Women": "KHKWOM",
-    "Carrom (Women)": "CARWOM",
-
-    # Mixed
-    "Chess - Mixed": "CHSMIX",
-
-    # E-Sports
-    "FC26": "FC26GM",
-    "BGMI": "BGMIES",
-    "COD Mobile": "CODMBL"
+    "SHORT FILM REVIEW": "SHTFLR",
+    "JAM - JUST A MINUTE": "JAMMIN",
+    "Carrom -  M&W": "CARROMW",
+    "Chess - M&W": "CHSSMW",
+    "FC26": "FC26GM"
 }
 
 # ---------------- SECURITY DECORATORS ---------------- #
