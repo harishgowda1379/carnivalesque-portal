@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -304,45 +304,44 @@
 
 <div class="stars-container" id="stars"></div>
 
-<header>Registry Node</header>
+        <header>Registry Node</header>
 
-<div class="container">
-    <div class="card">
-        <div class="form-group">
-            <label>Accession Number</label>
-            <input type="text" id="regNo" placeholder="IDENTIFIER-XXXX" autocomplete="off">
-        </div>
+        <div class="container">
+            <div class="card">
+                <div class="form-group">
+                    <label>Accession Number</label>
+                    <input type="text" id="regNo" placeholder="C26____" value="C26" autocomplete="off" style="font-family: 'Courier New', monospace; letter-spacing: 2px;">
+                </div>
 
-        <button onclick="fetchDetails()" id="fetchBtn">Retrieve Data</button>
+                <button onclick="fetchDetails()" id="fetchBtn">Retrieve Data</button>
 
-        <div class="details" id="details">
-            <div class="detail-row">
-                <div class="label">Event</div>
-                <div class="value" id="event"></div>
-            </div>
-            <div class="detail-row">
-                <div class="label">College</div>
-                <div class="value" id="college"></div>
-            </div>
-            <div class="detail-row">
-                <div class="label">Number of participantst</div>
-                <div class="value" id="teamSize"></div>
-            </div>
+                <div class="details" id="details">
+                    <div class="detail-row">
+                        <div class="label">Event</div>
+                        <div class="value" id="event"></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="label">College</div>
+                        <div class="value" id="college"></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="label">Number of participants</div>
+                        <div class="value" id="teamSize"></div>
+                    </div>
+                    <div class="badge">Team Members</div>
+                    <ul id="teamList" style="list-style: none;"></ul>
+                    <div class="sub-actions">
+                        <button type="button" class="btn-secondary" onclick="toggleEditor()" id="editToggleBtn">Edit / Add Team Members</button>
+                        <button type="button" class="btn-secondary" onclick="addMemberRow()" id="addMemberBtn">+ Add Member</button>
+                    </div>
+                </div>
 
-            <div class="badge">Team Members</div>
-            <ul id="teamList" style="list-style: none;"></ul>
-
-            <div class="sub-actions">
-                <button type="button" class="btn-secondary" onclick="toggleEditor()" id="editToggleBtn">Edit / Add Team Members</button>
-                <button type="button" class="btn-secondary" onclick="addMemberRow()" id="addMemberBtn">+ Add Member</button>
-            </div>
-
-            <div class="editor" id="editor">
-                <div class="editor-title">Team Editor (Max 20)</div>
-                <div class="editor-grid" id="editorGrid"></div>
-                <div class="hint">Tip: first name is treated as Leader/Primary. Empty rows are ignored.</div>
-                <button type="button" onclick="saveTeamMembers()" id="saveTeamBtn" style="margin-top: 18px;">Save Team Members</button>
-            </div>
+                <div class="editor" id="editor">
+                    <div class="editor-title">Team Editor (Max 20)</div>
+                    <div class="editor-grid" id="editorGrid"></div>
+                    <div class="hint">Tip: first name is treated as Leader/Primary. Empty rows are ignored.</div>
+                    <button type="button" onclick="saveTeamMembers()" id="saveTeamBtn" style="margin-top: 18px;">Save Team Members</button>
+                </div>
 
             <button onclick="markReported()" id="markBtn">Authorize & Report Entry</button>
         </div>
@@ -377,6 +376,7 @@
 
     let currentReg = "";
     let currentTeam = [];
+    let currentEventMax = 20; // Default max team members
 
     function fetchDetails() {
         const errorDiv = document.getElementById("error");
@@ -423,6 +423,24 @@
             document.getElementById("teamSize").textContent = data.team_size;
 
             currentTeam = Array.isArray(data.team) ? data.team.slice() : [];
+
+            // Fetch event requirements for team member validation
+            fetch("/get_event_requirements?event=" + encodeURIComponent(data.event))
+                .then(res => res.json())
+                .then(reqData => {
+                    if (reqData.max) {
+                        currentEventMax = reqData.max;
+                        // Update add member button text with limit
+                        const addBtn = document.getElementById("addMemberBtn");
+                        if (addBtn) {
+                            addBtn.textContent = `+ Add Member (${currentTeam.length}/${reqData.max})`;
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.log("Could not fetch event requirements");
+                    currentEventMax = 20; // Default fallback
+                });
 
             const list = document.getElementById("teamList");
             list.innerHTML = "";
@@ -504,8 +522,11 @@
     function addMemberRow(prefill = "", forcedIndex = null) {
         const grid = document.getElementById("editorGrid");
         const rows = grid.querySelectorAll(".member-row");
-        if (rows.length >= 20) {
-            alert("Maximum 20 team members allowed.");
+        const currentCount = collectTeamFromEditor().length;
+        
+        // Check event-specific limit
+        if (currentCount >= currentEventMax) {
+            alert(`Maximum ${currentEventMax} team members allowed for this event.`);
             return;
         }
 
@@ -518,6 +539,7 @@
             <button type="button" class="icon-btn" title="Remove" onclick="removeMemberRow(this)">✕</button>
         `;
         grid.appendChild(row);
+        updateAddMemberButton();
         return row;
     }
 
@@ -532,6 +554,26 @@
             const tag = r.querySelector(".member-tag");
             if (tag) tag.textContent = String(i + 1);
         });
+        
+        // Update add member button text
+        updateAddMemberButton();
+    }
+
+    function updateAddMemberButton() {
+        const addBtn = document.getElementById("addMemberBtn");
+        if (addBtn && currentEventMax) {
+            const currentCount = collectTeamFromEditor().length;
+            addBtn.textContent = `+ Add Member (${currentCount}/${currentEventMax})`;
+            
+            // Disable button if limit reached
+            if (currentCount >= currentEventMax) {
+                addBtn.disabled = true;
+                addBtn.style.opacity = "0.5";
+            } else {
+                addBtn.disabled = false;
+                addBtn.style.opacity = "1";
+            }
+        }
     }
 
     function collectTeamFromEditor() {
@@ -551,10 +593,13 @@
     }
 
     function saveTeamMembers() {
+        const team = collectTeamFromEditor();
         const errorDiv = document.getElementById("error");
+        const successDiv = document.getElementById("success");
         const saveBtn = document.getElementById("saveTeamBtn");
 
         errorDiv.style.display = "none";
+        successDiv.style.display = "none";
 
         if (!currentReg) {
             errorDiv.textContent = "Fetch a registration first";
@@ -562,20 +607,8 @@
             return;
         }
 
-        const team = collectTeamFromEditor();
-        if (team.length === 0) {
-            errorDiv.textContent = "At least one team member is required";
-            errorDiv.style.display = "block";
-            return;
-        }
-        if (team.length > 20) {
-            errorDiv.textContent = "Maximum 20 team members allowed";
-            errorDiv.style.display = "block";
-            return;
-        }
-
-        saveBtn.disabled = true;
         saveBtn.innerText = "SAVING...";
+        saveBtn.disabled = true;
 
         fetch("/update_team_members", {
             method: "POST",
@@ -584,8 +617,8 @@
         })
         .then(res => res.json())
         .then(data => {
-            saveBtn.disabled = false;
             saveBtn.innerText = "Save Team Members";
+            saveBtn.disabled = false;
 
             if (data.error) {
                 errorDiv.textContent = data.error;
@@ -593,10 +626,7 @@
                 return;
             }
 
-            // update UI with saved team
-            currentTeam = team.slice();
-            document.getElementById("teamSize").textContent = String(currentTeam.length);
-
+            currentTeam = team;
             const list = document.getElementById("teamList");
             list.innerHTML = "";
             currentTeam.forEach((m, i) => {
@@ -605,21 +635,92 @@
                 list.appendChild(li);
             });
 
-            hideEditor();
-            document.getElementById("success").textContent = "Team members updated successfully";
-            document.getElementById("success").style.display = "block";
+            successDiv.textContent = "Team Updated Successfully";
+            successDiv.style.display = "block";
             setTimeout(() => {
-                document.getElementById("success").style.display = "none";
-                document.getElementById("success").textContent = "Unit Transmission Successful: Marked as Reported";
-            }, 2500);
+                successDiv.style.display = "none";
+            }, 3000);
         })
-        .catch(() => {
-            saveBtn.disabled = false;
+        .catch(err => {
             saveBtn.innerText = "Save Team Members";
-            errorDiv.textContent = "Link Failure";
+            saveBtn.disabled = false;
+            errorDiv.textContent = "Failed to Update Team";
             errorDiv.style.display = "block";
         });
     }
+
+    // Registration number input formatting for registration desk
+    document.addEventListener('DOMContentLoaded', function() {
+        const regNoInput = document.getElementById("regNo");
+        
+        if (regNoInput) {
+            // Set cursor position after "C26" when focused
+            regNoInput.addEventListener('focus', function() {
+                if (this.value.length === 3) { // Just "C26"
+                    this.setSelectionRange(3, 3); // Position after "C26"
+                }
+            });
+            
+            // Handle input to protect "C26" prefix
+            regNoInput.addEventListener('input', function(e) {
+                let value = this.value;
+                
+                // Ensure it starts with "C26"
+                if (!value.startsWith('C26')) {
+                    value = 'C26' + value.replace(/^C26/, '');
+                }
+                
+                // Only allow numbers after "C26"
+                const afterPrefix = value.substring(3);
+                const numericOnly = afterPrefix.replace(/[^0-9]/g, '');
+                
+                // Limit to 4 digits after "C26"
+                const limitedDigits = numericOnly.slice(0, 4);
+                
+                // Reconstruct the value
+                this.value = 'C26' + limitedDigits;
+                
+                // Move cursor to end if user is typing
+                if (this.selectionStart < 3) {
+                    this.setSelectionRange(this.value.length, this.value.length);
+                }
+            });
+            
+            // Handle keypress to prevent deletion of "C26"
+            regNoInput.addEventListener('keydown', function(e) {
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                
+                // Prevent backspace/delete on "C26" part
+                if ((e.key === 'Backspace' && start <= 3 && end <= 3) ||
+                    (e.key === 'Delete' && start < 3)) {
+                    e.preventDefault();
+                    return;
+                }
+            });
+            
+            // Prevent paste of invalid content
+            regNoInput.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pastedData = (e.clipboardData || window.clipboardData).getData('text');
+                
+                // Extract only numbers from paste
+                const numericOnly = pastedData.replace(/[^0-9]/g, '');
+                
+                // Get current value after "C26"
+                const currentAfterPrefix = this.value.substring(3);
+                
+                // Combine and limit to 4 digits
+                const newDigits = (currentAfterPrefix + numericOnly).slice(0, 4);
+                
+                // Update value
+                this.value = 'C26' + newDigits;
+                
+                // Move cursor to end
+                this.setSelectionRange(this.value.length, this.value.length);
+            });
+        }
+    });
 </script>
 
 </body>

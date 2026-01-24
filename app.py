@@ -323,6 +323,7 @@ def get_team_for_reg(reg_no, row, mapping, status):
 def login_page():
     return render_template("login.html")
 
+@csrf.exempt
 @app.route("/login", methods=["POST"])
 @limiter.limit("5 per minute")
 def login():
@@ -426,6 +427,12 @@ def get_excel_columns():
     df = load_excel()
     return jsonify(df.columns.tolist())
 
+@app.route("/get_column_map")
+@login_required
+def get_column_map():
+    mapping = load_column_map()
+    return jsonify(mapping or {})
+
 @app.route("/save_column_map", methods=["POST"])
 @role_required("admin")
 def save_mapping():
@@ -453,13 +460,12 @@ def set_event_code():
 @app.route("/get_events")
 def get_events():
     try:
-        df = load_excel()
-        mapping = load_column_map()
-
-        if not mapping or "event" not in mapping:
+        # Return all events from the DEFAULT_EVENT_CODES dictionary
+        if DEFAULT_EVENT_CODES:
+            events = list(DEFAULT_EVENT_CODES.keys())
+            return jsonify(sorted(events))  # Sort alphabetically for better UX
+        else:
             return jsonify([])
-
-        return jsonify(df[mapping["event"]].dropna().unique().tolist())
     except Exception as e:
         print("GET_EVENTS ERROR:", e)
         return jsonify([])
@@ -494,6 +500,186 @@ def get_event_requirements():
         print(f"Found requirements for '{event}': {requirements}")
     
     return jsonify(requirements)
+
+@csrf.exempt
+@app.route("/get_colleges")
+def get_colleges():
+    """Get list of colleges for dropdown"""
+    # Common colleges list - you can customize this
+    colleges = [
+        "A P S COLLEGE OF ENGINEERING",
+        "ACHARYA BANGLORE BUSINESS SCHOOL",
+        "ACHARYA INSTITUTE OF GRADUATE STUDIES",
+        "ACHARYA INSTITUTE OF MANAGEMENT STUDIES",
+        "ACS ENGINEERING COLLEGE",
+        "ADITYA INSTITUTE OF MANAGEMENT STUDIES & RESEARCH",
+        "AGRAGAMI INSTITUTE OF COMPUTER & ADVANCED MANAGEMENT STUDIES",
+        "ALLIANCE UNIVERSITY CITY CAMPUS",
+        "ALLIANCE UNIVERSITY MAIN CAMPUS",
+        "AMC ENGINEERING COLLEGE",
+        "AMITY EDUCATION GROUP",
+        "AMITY GLOBAL BUSINESS SCHOOL BANGALORE",
+        "APS COLLEGE OF COMMERCE",
+        "ARIHANT GROUPS OF INSTITUTION",
+        "BALDWIN METHODIST COLLEGE",
+        "BALDWIN WOMENS METHODIST COLLEGE",
+        "BANASWDI COLLEGE OF NURSING",
+        "BANGALORE INSTITUTE OF TECHNOLOGY",
+        "BAPU COLLEGE",
+        "BASAWESHWARA COLLEGE OF ARTS COMMERCE AND SCIENCE",
+        "BBMP FIRST GRADE COLLEGE, BINNIPETE",
+        "BBMP FIRST GRADE COLLEGE FOR WOMEN, FRAZER TOWN",
+        "BEL FIRST GRADE COLLEGE",
+        "BES COLLEGE",
+        "BET SADATHUNNISA COLLEGE",
+        "BGS COLLEGE OF ENGINEERING",
+        "BGS INSTITUTE OF MANAGEMENT",
+        "BHARATH MATHA COLLEGE FOR WOMEN",
+        "BISHOP COTTON ACADEMY OF PROFESSIONAL MANAGEMENT",
+        "BISHOP COTTON WOMEN'S CHRISTIAN COLLEGE",
+        "BMS COLLEGE OF ARCHITECTURE",
+        "BMS COLLEGE OF COMMERCE & MANAGEMENT",
+        "BMS COLLEGE OF ENGINEERING",
+        "BMS COLLEGE OF LAW",
+        "BMS COLLEGE OF WOMEN",
+        "BNM DEGREE COLLEGE",
+        "BNMIT",
+        "BRINDAVAN GROUP OF INSTITUTIONS",
+        "C.B. BHANDARI JAIN COLLEGE",
+        "CES INSTITUTE OF FASHION TECHNOLOGY",
+        "CHARAN DEGREE COLLEGE",
+        "CHRIS CANADIAN DEGREE COLLEGE",
+        "CHRIST (DEEEMED TO BE UNIVERSITY)YESHWANTHAPUR CAMPUS",
+        "CHRIST ACADEMY INSTITUTE OF ADVANCED STUDIES AND LAW",
+        "CHRIST THE KING COLLEGE",
+        "CHRIST UNIVERSITY BANNERGHATTA CAMPUS",
+        "CHRIST UNIVERSITY KENGERI CAMPUS",
+        "CHRIST UNIVERSITY MAIN CAMPUS",
+        "CITY COLLEGE JAYANAGAR",
+        "CMR UNIVERSITY (CITY CAMPUS)",
+        "CMR UNIVERSITY (LAKESIDE CAMPUS)",
+        "CMR UNIVERSITY OMBR CAMPUS",
+        "CMRIT MARATHALI",
+        "COMMUNITY INSTITUTE OF COMMERCE AND MANAGEMENT",
+        "CREO VALLEY",
+        "DAYANADA SAGAR UNIVERSITY",
+        "DAYANANDA SAGAR UNIVERSITY (DSU) - CITY CAMPUS",
+        "DON BOSCO COLLEGE",
+        "DON BOSCO INSTITUTE OF TECHNOLOGY",
+        "DR. AMBEDKAR INSTITUTE OF MANAGEMENT STUDIES",
+        "EAST WEST SCHOOL OF BUSINESS MANAGEMENT",
+        "EBENIZER GROUP OF INSTITUTION",
+        "FLORENCE GROUP OF INSTITUTION",
+        "GIBS BUSINESS SCHOOL",
+        "GLOBAL ACADMEY OF TECHNOLOGY",
+        "GOPALAN COLLEGE OF COMMERCE",
+        "GOVERNMENT FIRST GRADE COLLEGE YELAHANKA",
+        "IBMR IBS",
+        "IFIM COLLEGE",
+        "IIBS BANGALORE R.T.NAGAR CAMPUS",
+        "INDIAN INSTITUTE OF PSYCHOLOGY AND RESEARCH",
+        "INTERNATIONAL INSTITUTE OF FASHION DESIGN",
+        "INTERNATIONAL INSTITUTE OF INFORMATION TECHNOLOGY, BANGALORE",
+        "ISBR",
+        "JAIN  UNIVERSITY  SCHOOL OF SCIENCES",
+        "JAIN CMS BUSINESS SCHOOL",
+        "JAIN COLLEGE",
+        "JAIN UNIVERSITY JP NAGAR CAMPUS",
+        "JAIN UNIVERSITY RAGIGUDDA CAMPUS",
+        "JD INSTITUTE OF FASHION TEWCHNOLOGY",
+        "JNANA JYOTHI DEGREE COLLEGE",
+        "JYOTHY INSTITUTE OF COMMERCE AND MANAGEMENT",
+        "JYOTHY INSTITUTE OF TECHNOLOGY",
+        "JYOTI NIVAS COLLEGE",
+        "KAIRALEE NIKETAN GOLDEN JUBILEE DEGREE COLLEGE",
+        "KIET COLLEGE OF EDUCATION",
+        "KLE SOCOIETY S NIJALINGAPPA COLLEGE",
+        "KNS INSTUTITE OF TECHNOLOGY",
+        "KRISTU JAYANTI",
+        "KRUPANIDHI DEGREE COLLEGE CARMELARAM ROAD",
+        "KRUPANIDHI GROUP OF INSTITUTIONS",
+        "KSSEM",
+        "LOYALA DEGREE COLLEGE",
+        "MAHARANI LAKSHMI AMMANNI COLLEGE FOR WOMEN",
+        "MANIPAL ACADEMY OF HIGHER EDUCATION, MAHE BENGALURU",
+        "MES COLLEGE OF ARTS, COMMERCE & SCIENCE",
+        "MES INSTITUTE OF MANAGEMENT",
+        "MKPM RV INSTITUTE OF LEGAL STUDIES",
+        "MONTFORT COLLEGE",
+        "MOUNT CARMEL COLLEGE",
+        "MS RAMAIAH COLLEGE OF ARTS, SCIENCE & COMMERCE",
+        "MVJ COLLEGE OF ENGINEERING",
+        "NEW HORIZON COLLEGE - KASTURINAGAR",
+        "NEW HORIZON COLLEGE OF ENGINEERING",
+        "NMKRV COLLEGE FOR WOMEN",
+        "NOBLE COLLLEGE",
+        "PADMA COLLEGE OF MANAGEMENT & SCIENCE",
+        "PEARL ACADEMY",
+        "PES UNIVERSITY",
+        "PES UNIVERSITY ELECTRONIC CITY CAMPUS",
+        "PRESIDENCY COLLEGE",
+        "PRESIDENCY UNIVERSITY",
+        "R V INSTITUTE OF MANAGEMENT",
+        "R.B.N.M.S.S FIRST GRADE COLLEGE",
+        "RAJAJINAGAR FIRST GRADE COLLEGE OF COMMERC",
+        "RAJARAJESHWARI ENGINEERING COLLEGE",
+        "RAMAIAH UNIVERSITY OF APPLIED SCIENCES",
+        "RAMAIAH UNIVERSITY OF APPLIED SCIENCES",
+        "RANI SARALADEVI DEGREE COLLEGE",
+        "RR.INSTITUTE OF TECHNOLOGY",
+        "RS COLLEGE OF MANAGEMENT & SCIENCE",
+        "RV COLLEGE OF ARCHIETURE",
+        "SAMBHRAM INSTITUTE OF TECHONOLOGY",
+        "SAPTHAGIRI COLLEGE OF ENGINEEERING",
+        "SEA COLLEGE OF SCIENCE, COMMERCE AND ARTS",
+        "SESHADRIPURAM COLLEGE",
+        "SESHADRIPURAM FIRST GRADE COLLEGE",
+        "SHAKUNTALA DEVI COLLEGE",
+        "SHREE BALAJI DEGREE COLLEGE",
+        "SINDHI COLLEGE",
+        "SIR M. VISVESVARAYA INSTITUTE OF TECHNOLOGY",
+        "SMSG JAIN COLLEGE",
+        "SOUNDARYA INSTITUTE OF MANAGEMENT AND SCIENCE",
+        "SREE OMKAR GROUP OF INSTITUTIONS",
+        "SRI KRISHNA DEGREE COLLEGE",
+        "SRI KRISHNA INSITUTE OF TECHNOLOGY",
+        "SRI REVANNA INSTIUTE OF TECHNOLOGY",
+        "SRI SAI COLLEGE FOR WOMEN",
+        "SRI VENKATESHWARA COLLEGE OF ENGINEERING",
+        "SRI VENKATESHWARA FIRST GRADE COLLEGE",
+        "SRUSHTI DEGREE COLLEGE",
+        "SSMRV COLLEGE",
+        "SSR COLEGE FOR WOMEN",
+        "ST ANNES DEGREE COLLEGE FOR WOMEN",
+        "ST. CLARET COLLEGE",
+        "ST. FRANCIS DE SALES",
+        "ST. GEORGE COLLEGE OF MANAGEMENT & SCIENCE",
+        "ST. JOHNS MEDICAL COLLEGE",
+        "ST. JOSEPH COLLEGE OF COMMERCE",
+        "ST. JOSEPH COLLEGE OF LAW",
+        "ST. JOSEPH INSTITUTE OF MANAGEMENT",
+        "ST. JOSEPH'S UNIVERSITY",
+        "ST. PAULS COLLEGE",
+        "ST. VINCENT PALLOTTI COLLEGE",
+        "SURANA COLLEGE - PEENYA CAMPUS",
+        "SUVIDYA COLLEGE",
+        "SWAMY VIVEKANANDA RURAL FIRST GRADE COLLEGE",
+        "T JOHN COLLEGE",
+        "TAPASYA DEGREE & PUC COLLEGE, CHANDAPURA",
+        "THE KINGDOM COLLEGE",
+        "THE NATIONAL DEGREE COLLEGE",
+        "THE OXFORD COLLEGE OF BUSINESS MANAGEMENT",
+        "THE OXFORD COLLEGE OF ENGINEERING",
+        "TRANSCEND GROUP OF INSTITUTIONS",
+        "UNITED INTERNATIONAL DEGREE COLLEGE",
+        "VEMANA IT",
+        "VIJAYA COLLEGE, JAYANAGAR",
+        "VIJAYA COLLEGE, RV ROAD",
+        "VIJAYA VITTALA INSTUITE OF TECHNOLOGY",
+        "VV PURAM COLLEGE OF ARTS & COMMERCE",
+        "Others"
+    ]
+    return jsonify(colleges)
 
 
 @app.route("/init_event_codes", methods=["POST"])
@@ -1084,6 +1270,7 @@ def submit_spot_registration():
         
         event = data.get("event", "").strip()
         college = data.get("college", "").strip()
+        college_other = data.get("college_other", "").strip()
         contact = data.get("contact", "").strip()
         email = data.get("email", "").strip()
         reg_no = data.get("reg_no", "").strip()
@@ -1138,7 +1325,18 @@ def submit_spot_registration():
         # Map all required fields
         new_row[mapping["reg_no"]] = reg_no
         new_row[mapping["event"]] = event
-        new_row[mapping["college"]] = college
+        
+        # Handle college mapping - if "Others" was selected, use specify_college field
+        if college_other and (college == "Others" or college == "Others (Not in list)"):
+            # User selected "Others" and entered custom college name
+            new_row[mapping["college"]] = ""  # Leave College Name empty
+            if mapping.get("specify_college"):
+                new_row[mapping["specify_college"]] = college_other  # Put custom college in Specify College Name
+        else:
+            # Regular college selection
+            new_row[mapping["college"]] = college
+            if mapping.get("specify_college"):
+                new_row[mapping["specify_college"]] = ""
         
         # Set team leader
         if mapping.get("team_leader"):
@@ -1202,7 +1400,13 @@ def submit_spot_registration():
                 with pd.ExcelWriter(EXCEL_PATH, engine='openpyxl') as writer:
                     df.to_excel(writer, index=False, sheet_name='Sheet1')
         except portalocker.exceptions.LockException:
-            return jsonify({"error": "File is locked. Please try again in a moment."}), 503
+            return jsonify({"error": "File is currently being updated by another user. Please wait a moment and try again."}), 503
+        except PermissionError as e:
+            print(f"PERMISSION ERROR: {e}")
+            return jsonify({"error": "Excel file is currently open in another program. Please close Excel and try again."}), 503
+        except Exception as e:
+            print(f"EXCEL WRITE ERROR: {e}")
+            return jsonify({"error": f"Failed to save registration: {str(e)}"}), 500
         
         return jsonify({
             "success": True,

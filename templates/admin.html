@@ -231,6 +231,10 @@
                 <select id="collegeCol"><option value="">Scanning Columns...</option></select>
             </div>
             <div class="form-group">
+                <label>Specify College Name (for "Others" option)</label>
+                <select id="specifyCollegeCol"><option value="">Scanning Columns...</option></select>
+            </div>
+            <div class="form-group">
                 <label>Team Lead / Representative</label>
                 <select id="leaderCol"><option value="">Scanning Columns...</option></select>
             </div>
@@ -261,12 +265,14 @@
             starsContainer.appendChild(star);
         }
 
-        // Logic for fetching columns
+        // Load current mapping and populate columns
         fetch("/get_excel_columns")
             .then(res => res.json())
             .then(cols => {
                 if (!cols || cols.length === 0) return;
-                ["regCol", "eventCol", "collegeCol", "leaderCol"].forEach(id => {
+                
+                // Populate all dropdowns
+                ["regCol", "eventCol", "collegeCol", "specifyCollegeCol", "leaderCol"].forEach(id => {
                     const sel = document.getElementById(id);
                     sel.innerHTML = "<option value=''>Select Column...</option>";
                     cols.forEach(c => {
@@ -275,6 +281,8 @@
                         sel.appendChild(opt);
                     });
                 });
+                
+                // Populate member checkboxes
                 const memberBox = document.getElementById("memberCols");
                 memberBox.innerHTML = "";
                 cols.forEach(c => {
@@ -283,6 +291,28 @@
                     lbl.innerHTML = `<input type="checkbox" value="${c}"> <span>${c}</span>`;
                     memberBox.appendChild(lbl);
                 });
+                
+                // Load and set current mapping values
+                fetch("/get_column_map")
+                    .then(res => res.json())
+                    .then(mapping => {
+                        if (mapping) {
+                            if (mapping.reg_no) document.getElementById("regCol").value = mapping.reg_no;
+                            if (mapping.event) document.getElementById("eventCol").value = mapping.event;
+                            if (mapping.college) document.getElementById("collegeCol").value = mapping.college;
+                            if (mapping.specify_college) document.getElementById("specifyCollegeCol").value = mapping.specify_college;
+                            if (mapping.team_leader) document.getElementById("leaderCol").value = mapping.team_leader;
+                            
+                            // Set member checkboxes
+                            if (mapping.team_members && Array.isArray(mapping.team_members)) {
+                                mapping.team_members.forEach(col => {
+                                    const checkbox = document.querySelector(`#memberCols input[value="${col}"]`);
+                                    if (checkbox) checkbox.checked = true;
+                                });
+                            }
+                        }
+                    })
+                    .catch(err => console.log("No existing mapping found"));
             });
 
         function saveMapping() {
@@ -290,6 +320,7 @@
                 reg_no: document.getElementById("regCol").value,
                 event: document.getElementById("eventCol").value,
                 college: document.getElementById("collegeCol").value,
+                specify_college: document.getElementById("specifyCollegeCol").value,
                 team_leader: document.getElementById("leaderCol").value,
                 team_members: Array.from(document.querySelectorAll("#memberCols input:checked")).map(cb => cb.value)
             };

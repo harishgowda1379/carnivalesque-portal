@@ -11,5 +11,12 @@
             "HARSHA"
         ],
         "position": 1
+    },
+    "C260003": {
+        "event": "Decrypt-X",
+        "team_override": [
+            "harish",
+            "gowtham"
+        ]
     }
 }
