@@ -34,15 +34,52 @@
             background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            border-bottom: 1px solid var(--glass-border);
-            padding: 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 25px;
             text-align: center;
             font-family: 'Syncopate', sans-serif;
-            letter-spacing: 10px;
+            letter-spacing: 8px;
             text-transform: uppercase;
-            font-size: 20px;
-            position: sticky; top: 0; z-index: 100;
+            font-size: 18px;
+            color: #fff;
             text-shadow: 0 0 15px var(--neon-purple);
+            position: sticky; top: 0; z-index: 100;
+            position: relative;
+        }
+
+        .back-to-login-btn {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-family: 'Raleway', sans-serif;
+            font-size: 12px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .back-to-login-btn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.4);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding-left: 100px;
+                text-align: center;
+            }
+            .back-to-login-btn {
+                padding: 6px 12px;
+                font-size: 10px;
+                left: 10px;
+            }
         }
 
         .container {
@@ -200,7 +237,10 @@
 
 <div class="stars-container" id="stars"></div>
 
-<header>Coordinator Node</header>
+<header>
+        <a href="/login" class="back-to-login-btn">← Back to Login</a>
+        Coordinator Node
+    </header>
 
 <div class="container">
 
@@ -232,7 +272,7 @@
         </div>
 
         <button onclick="startEvent()" id="startBtn" style="border-color: var(--neon-blue); color: var(--neon-blue); margin-top: 30px;">
-            Mark has event start
+            Mark as event start
         </button>
         <div class="success" id="startSuccess"></div>
         <div class="error" id="startError"></div>
@@ -319,6 +359,11 @@
     function closeModal() {
         document.getElementById("codeModal").classList.remove("active");
         currentEvent = null;
+        // Stop auto-refresh when closing modal
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
+        }
     }
 
     function verifyCode() {
@@ -344,11 +389,22 @@
         });
     }
 
+    let autoRefreshInterval = null;
+
     function loadEventDetails() {
         document.getElementById("eventsCard").classList.add("hidden");
         document.getElementById("eventDetailsCard").classList.remove("hidden");
         document.getElementById("currentEventName").textContent = `OPERATING: ${currentEvent}`;
 
+        // Initial load
+        fetchAndUpdateTeams();
+        
+        // Start auto-refresh every 2 seconds
+        if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+        autoRefreshInterval = setInterval(fetchAndUpdateTeams, 2000);
+    }
+
+    function fetchAndUpdateTeams() {
         fetch("/get_reported_teams", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
@@ -361,7 +417,8 @@
             renderTeams();
             updateWinnerDropdowns();
             if (eventStarted) document.getElementById("winnersCard").classList.remove("hidden");
-        });
+        })
+        .catch(err => console.error("Auto-refresh error:", err));
     }
 
     function renderTeams() {
@@ -378,7 +435,7 @@
             teamBox.className = "team-box";
             
             const collegeInfo = t.college ? `<span>${t.college}</span>` : '';
-            const contactInfo = t.contact ? `<span>📞 ${t.contact}</span>` : '';
+            const contactInfo = t.contact ? `<span style="cursor: pointer; color: var(--neon-blue); text-decoration: underline;" onclick="promptCall('${t.contact}')">📞 ${t.contact}</span>` : '';
             const infoSection = (collegeInfo || contactInfo) ? 
                 `<div class="team-info">${collegeInfo}${contactInfo}</div>` : '';
             
@@ -389,6 +446,12 @@
             `;
             container.appendChild(teamBox);
         });
+    }
+
+    function promptCall(phone) {
+        if (confirm(`Call ${phone}?`)) {
+            window.location.href = `tel:${phone}`;
+        }
     }
 
     function updateWinnerDropdowns() {

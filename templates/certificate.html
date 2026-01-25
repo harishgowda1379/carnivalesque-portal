@@ -236,7 +236,7 @@
     <div class="stars-container" id="stars"></div>
 
     <div class="nav-header">
-        <a href="/" class="back-link">← RETURN TO PORTAL</a>
+        <a href="/login" class="back-link">← Back to Login</a>
     </div>
 
     <div class="container">
@@ -253,6 +253,8 @@
             <div class="modal-title">Team Details</div>
             <div class="detail-label">Identifier</div>
             <div id="m-reg" class="detail-value"></div>
+            <div class="detail-label">College</div>
+            <div id="m-college" class="detail-value"></div>
             <div class="detail-label">Rank</div>
             <div id="m-rank" class="detail-value"></div>
             <div class="detail-label">Team Members</div>
@@ -274,8 +276,9 @@
             starsContainer.appendChild(star);
         }
 
-        function openModal(reg, rank, team) {
+        function openModal(reg, rank, team, college) {
             document.getElementById('m-reg').innerText = reg;
+            document.getElementById('m-college').innerText = college || "Not Available";
             document.getElementById('m-rank').innerText = rank;
             document.getElementById('m-team').innerText = team;
             document.getElementById('modal').style.display = 'flex';
@@ -313,11 +316,12 @@
                     eventGroups[name].sort((a,b) => a.position - b.position).forEach(w => {
                         const rankLabel = w.position == 1 ? "FIRST" : w.position == 2 ? "SECOND" : "THIRD";
                         const teamList = w.team ? w.team.join(", ") : "N/A";
+                        const college = w.college ? w.college.replace(/'/g, "\\'") : "";
                         winnersHtml += `
                             <div class="winner-entry">
                                 <div class="rank">${rankLabel} PLACE</div>
                                 <div style="font-size: 11px; word-break: break-all;">ID: ${w.id}</div>
-                                <div class="details-link" onclick="event.stopPropagation(); openModal('${w.id}', '${rankLabel}', '${teamList}')">
+                                <div class="details-link" onclick="event.stopPropagation(); openModal('${w.id}', '${rankLabel}', '${teamList}', '${college}')">
                                     View Team Details
                                 </div>
                             </div>

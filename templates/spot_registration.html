@@ -52,10 +52,45 @@
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 30px 25px;
+            padding: 30px 20px;
             text-align: center;
-            position: sticky; top: 0; z-index: 100;
             margin: -20px -20px 30px -20px;
+            position: relative;
+        }
+
+        .back-to-login-btn {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-family: 'Raleway', sans-serif;
+            font-size: 12px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .back-to-login-btn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.4);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding-left: 100px;
+                text-align: center;
+            }
+            .back-to-login-btn {
+                padding: 6px 12px;
+                font-size: 10px;
+                left: 10px;
+            }
         }
 
         .header-title {
@@ -379,6 +414,7 @@
 <div class="stars-container" id="stars"></div>
 
 <header>
+    <a href="/login" class="back-to-login-btn">← Back to Login</a>
     <h1 class="header-title">Carnivalesque</h1>
     <div class="header-subtitle">Spot Registration Portal</div>
 </header>

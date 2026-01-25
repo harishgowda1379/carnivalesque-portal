@@ -514,6 +514,35 @@
         letter-spacing: 1px;
     }
 
+    .password-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .password-container .form-input {
+        padding-right: 50px;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 15px;
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.6);
+        cursor: pointer;
+        font-size: 20px;
+        padding: 8px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .password-toggle:hover {
+        color: var(--neon-purple);
+    }
+
     .form-button {
         width: 100%;
         padding: 18px;
@@ -784,7 +813,12 @@ body {
                 
                 <div class="form-group">
                     <label for="password">Access Key</label>
-                    <input type="password" id="password" class="form-input" placeholder="ENTER ACCESS KEY" required autocomplete="current-password">
+                    <div class="password-container">
+                        <input type="password" id="password" class="form-input" placeholder="ENTER ACCESS KEY" required autocomplete="current-password">
+                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility()" title="Show/Hide Password">
+                            <span id="passwordIcon">👁️</span>
+                        </button>
+                    </div>
                 </div>
                 
                 
@@ -831,8 +865,48 @@ body {
             }, 250);
         });
         
-        // Initial load
-        setTimeout(hideLoader, 1200);
+        // Initial load - more robust handling for page refresh
+        const hideLoaderOnLoad = () => {
+            // Check if loader element exists
+            const loader = document.getElementById("loaderOverlay");
+            if (loader) {
+                // Hide loader immediately if page is already loaded
+                if (document.readyState === 'complete') {
+                    hideLoader();
+                } else {
+                    // Wait for page to fully load, then hide
+                    setTimeout(hideLoader, 1200);
+                }
+            }
+        };
+        
+        hideLoaderOnLoad();
+        
+        // Also hide loader when window is fully loaded (backup for refresh issues)
+        window.addEventListener('load', () => {
+            setTimeout(hideLoader, 500);
+        });
+        
+        // Handle browser back/forward navigation
+        window.addEventListener('pageshow', (event) => {
+            // If page is loaded from cache (browser back/forward)
+            if (event.persisted) {
+                hideLoader();
+            }
+        });
+        
+        // Handle visibility change (when user switches tabs and comes back)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                // Page is now visible, ensure loader is hidden
+                hideLoader();
+            }
+        });
+        
+        // Handle page focus (when user clicks back to the tab)
+        window.addEventListener('focus', () => {
+            hideLoader();
+        });
         
         // Preload your background image
         const bgImage = new Image();
@@ -909,7 +983,12 @@ body {
 
     function hideLoader() {
         const loader = document.getElementById("loaderOverlay");
-        loader.classList.add("hidden");
+        if (loader) {
+            loader.classList.add("hidden");
+            // Also ensure it's hidden with inline styles as backup
+            loader.style.opacity = "0";
+            loader.style.pointerEvents = "none";
+        }
     }
 
     // ================= STARFIELD =================
@@ -970,6 +1049,20 @@ body {
         }, 100);
         
         announceToScreenReader(`Login form for ${roleNames[role]} opened`);
+    }
+
+    // ================= PASSWORD VISIBILITY TOGGLE =================
+    function togglePasswordVisibility() {
+        const passwordInput = document.getElementById("password");
+        const passwordIcon = document.getElementById("passwordIcon");
+        
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            passwordIcon.innerText = "🙈";
+        } else {
+            passwordInput.type = "password";
+            passwordIcon.innerText = "👁️";
+        }
     }
 
     // ================= FORM HANDLING =================

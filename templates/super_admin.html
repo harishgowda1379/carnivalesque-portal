@@ -36,7 +36,48 @@
             padding: 30px;
             text-align: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .back-to-login-btn {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-family: 'Raleway', sans-serif;
+            font-size: 12px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .back-to-login-btn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.4);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding-left: 100px;
+                text-align: center;
+            }
+            .back-to-login-btn {
+                padding: 6px 12px;
+                font-size: 10px;
+                left: 10px;
+            }
+        }
+
+        header {
             font-family: 'Syncopate', sans-serif;
             letter-spacing: 10px;
             text-transform: uppercase;
@@ -214,7 +255,10 @@
 <body>
     <div class="stars-container" id="stars"></div>
 
-    <header>Super Admin Control Panel</header>
+    <header>
+        <a href="/login" class="back-to-login-btn">← Back to Login</a>
+        Super Admin Control Panel
+    </header>
 
     <div class="container">
         <!-- Event Status -->
@@ -327,8 +371,12 @@
             btn.disabled = true;
 
             fetch("/calculate_champion")
-                .then(res => res.json())
+                .then(res => {
+                    console.log("Response status:", res.status);
+                    return res.json();
+                })
                 .then(data => {
+                    console.log("Champion data:", data);
                     btn.textContent = originalText;
                     btn.disabled = false;
 

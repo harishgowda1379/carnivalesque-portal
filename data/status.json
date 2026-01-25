@@ -1,22 +1,21 @@
 {
-    "SFC202600": {
-        "event": "IPL Auction",
+    "C260001": {
+        "event": "FC26 EA SPORTS",
+        "reported": true,
+        "event_started": false,
+        "event_ended": false
+    },
+    "C260002": {
+        "event": "Carrom (Men)",
         "reported": true,
         "event_started": true,
         "event_ended": true,
-        "team_override": [
-            "Gowtham",
-            "Harish",
-            "Obito",
-            "HARSHA"
-        ],
         "position": 1
     },
     "C260003": {
         "event": "Decrypt-X",
-        "team_override": [
-            "harish",
-            "gowtham"
-        ]
+        "reported": true,
+        "event_started": false,
+        "event_ended": false
     }
 }

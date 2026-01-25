@@ -59,9 +59,43 @@
             color: #fff;
             text-shadow: 0 0 15px var(--neon-purple);
             position: sticky; top: 0; z-index: 100;
+            position: relative;
         }
 
-        .container {
+        .back-to-login-btn {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-family: 'Raleway', sans-serif;
+            font-size: 12px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .back-to-login-btn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.4);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding-left: 100px;
+                text-align: center;
+            }
+            .back-to-login-btn {
+                padding: 6px 12px;
+                font-size: 10px;
+                left: 10px;
+            }
+        }
             max-width: 800px;
             margin: 60px auto;
             padding: 0 20px;
@@ -185,15 +219,6 @@
             display: none;
         }
 
-        .editor-title {
-            font-family: 'Syncopate', sans-serif;
-            font-size: 10px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.7);
-            margin-bottom: 14px;
-        }
-
         .editor-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -304,7 +329,10 @@
 
 <div class="stars-container" id="stars"></div>
 
-        <header>Registry Node</header>
+        <header>
+        Registry Node
+        <a href="/login" class="back-to-login-btn">← Back to Login</a>
+    </header>
 
         <div class="container">
             <div class="card">
@@ -343,7 +371,7 @@
                     <button type="button" onclick="saveTeamMembers()" id="saveTeamBtn" style="margin-top: 18px;">Save Team Members</button>
                 </div>
 
-            <button onclick="markReported()" id="markBtn">Authorize & Report Entry</button>
+            <button type="button" onclick="markReported();" id="markBtn">Authorize & Report Entry</button>
         </div>
 
         <div class="error" id="error"></div>
@@ -428,13 +456,18 @@
             fetch("/get_event_requirements?event=" + encodeURIComponent(data.event))
                 .then(res => res.json())
                 .then(reqData => {
+                    console.log("DEBUG: Event requirements for", data.event, ":", reqData);
                     if (reqData.max) {
                         currentEventMax = reqData.max;
+                        console.log("DEBUG: Set currentEventMax to:", currentEventMax);
                         // Update add member button text with limit
                         const addBtn = document.getElementById("addMemberBtn");
                         if (addBtn) {
                             addBtn.textContent = `+ Add Member (${currentTeam.length}/${reqData.max})`;
                         }
+                    } else {
+                        console.log("DEBUG: No max value in requirements, using default 20");
+                        currentEventMax = 20;
                     }
                 })
                 .catch(err => {
@@ -465,20 +498,60 @@
     }
 
     function markReported() {
+        console.log("DEBUG: markReported called, currentReg:", currentReg);
         const markBtn = document.getElementById("markBtn");
         markBtn.innerText = "UPLOADING...";
         markBtn.disabled = true;
 
+        const requestData = { reg_no: currentReg };
+        console.log("DEBUG: Sending request:", requestData);
+
         fetch("/mark_reported", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ reg_no: currentReg })
+            body: JSON.stringify(requestData)
         })
-        .then(res => res.json())
+        .then(res => {
+            console.log("DEBUG: Response status:", res.status);
+            return res.json();
+        })
         .then(data => {
+            console.log("DEBUG: Response data:", data);
             if (data.error) {
                 document.getElementById("error").textContent = data.error;
                 document.getElementById("error").style.display = "block";
+                markBtn.innerText = "AUTHORIZE & REPORT ENTRY";
+                markBtn.disabled = false;
+            } else {
+                document.getElementById("success").style.display = "block";
+                document.getElementById("details").style.display = "none";
+                document.getElementById("regNo").value = "";
+                
+                // Clear all old member details
+                document.getElementById("event").textContent = "";
+                document.getElementById("college").textContent = "";
+                document.getElementById("teamSize").textContent = "";
+                document.getElementById("teamList").innerHTML = "";
+                
+                // Clear editor grid
+                document.getElementById("editorGrid").innerHTML = "";
+                
+                // Reset variables
+                currentReg = "";
+                currentTeam = [];
+                currentEventMax = 20;
+                
+                // Reset add member button
+                const addBtn = document.getElementById("addMemberBtn");
+                if (addBtn) {
+                    addBtn.textContent = "+ Add Member";
+                    addBtn.disabled = false;
+                    addBtn.style.opacity = "1";
+                }
+                
+                // Hide editor
+                hideEditor();
+                
                 markBtn.innerText = "AUTHORIZE & REPORT ENTRY";
                 markBtn.disabled = false;
                 return;
@@ -487,6 +560,32 @@
             document.getElementById("success").style.display = "block";
             document.getElementById("details").style.display = "none";
             document.getElementById("regNo").value = "";
+            
+            // Clear all old member details
+            document.getElementById("event").textContent = "";
+            document.getElementById("college").textContent = "";
+            document.getElementById("teamSize").textContent = "";
+            document.getElementById("teamList").innerHTML = "";
+            
+            // Clear editor grid
+            document.getElementById("editorGrid").innerHTML = "";
+            
+            // Reset variables
+            currentReg = "";
+            currentTeam = [];
+            currentEventMax = 20;
+            
+            // Reset add member button
+            const addBtn = document.getElementById("addMemberBtn");
+            if (addBtn) {
+                addBtn.textContent = "+ Add Member";
+                addBtn.disabled = false;
+                addBtn.style.opacity = "1";
+            }
+            
+            // Hide editor
+            hideEditor();
+            
             markBtn.innerText = "AUTHORIZE & REPORT ENTRY";
             markBtn.disabled = false;
         });

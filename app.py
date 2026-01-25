@@ -91,7 +91,13 @@ EVENT_TEAM_REQUIREMENTS = {
     "JAM - JUST A MINUTE": {"min": 1, "max": 1},
     "Carrom -  M&W": {"min": 1, "max": 1},
     "Chess - M&W": {"min": 1, "max": 1},
-    "FC26": {"min": 1, "max": 1}
+    "FC26": {"min": 1, "max": 1},
+    "FC26 EA SPORTS": {"min": 1, "max": 1},
+    # Additional event variations to handle different naming in Excel
+    "Carrom (Men)": {"min": 1, "max": 1},
+    "Chess (Men)": {"min": 1, "max": 1},
+    "Carrom (Women)": {"min": 1, "max": 1},
+    "Chess (Women)": {"min": 1, "max": 1}
 }
 
 # Default Event Access Codes (6-character alphanumeric)
@@ -268,20 +274,38 @@ def extract_team(row, mapping):
     team = []
     seen = set()
 
+    print(f"DEBUG: Extracting team for reg_no: {row.get(mapping.get('reg_no', ''), 'Unknown')}")
+    print(f"DEBUG: Available columns: {list(row.index)}")
+    print(f"DEBUG: Row data sample: {dict(row.head(1))}")
+
     leader_col = mapping.get("team_leader")
     if leader_col and pd.notna(row.get(leader_col)):
         leader = str(row[leader_col]).strip()
+        print(f"DEBUG: Found leader: {leader}")
         if leader.lower() not in seen:
             team.append(leader)
             seen.add(leader.lower())
 
+    # Handle team_members columns
     for col in mapping.get("team_members", []):
         if col in row and pd.notna(row[col]):
             member = str(row[col]).strip()
+            print(f"DEBUG: Found team member in {col}: {member}")
             if member.lower() not in seen:
                 team.append(member)
                 seen.add(member.lower())
 
+    # Also check for "participants" and "students" columns directly in Excel
+    for col in row.index:
+        col_lower = str(col).lower()
+        if col_lower in ["participants", "students"] and pd.notna(row[col]):
+            member = str(row[col]).strip()
+            print(f"DEBUG: Found direct column {col}: {member}")
+            if member and member.lower() not in seen:
+                team.append(member)
+                seen.add(member.lower())
+
+    print(f"DEBUG: Final team: {team}")
     return team
 
 # ---------------- TEAM OVERRIDES ---------------- #
@@ -290,10 +314,19 @@ def get_team_for_reg(reg_no, row, mapping, status):
     """
     Returns team list for a registration number.
     Priority:
-      1) status[reg_no]['team_override'] if present and non-empty
-      2) extracted team from Excel row
+      1) extracted team from Excel row (primary source)
+      2) status[reg_no]['team_override'] if present and non-empty (fallback)
     """
     try:
+        # First try to get team from Excel (primary source)
+        excel_team = extract_team(row, mapping) if row is not None else []
+        if excel_team:  # If Excel has team data, use it
+            return excel_team
+    except Exception:
+        pass
+
+    try:
+        # Fallback to spot registration override
         override = status.get(reg_no, {}).get("team_override")
         if isinstance(override, list) and len([x for x in override if str(x).strip()]) > 0:
             # normalize + drop blanks
@@ -312,15 +345,16 @@ def get_team_for_reg(reg_no, row, mapping, status):
     except Exception:
         pass
 
-    try:
-        return extract_team(row, mapping) if row is not None else []
-    except Exception:
-        return []
+    return []
 
 # ---------------- ROUTES ---------------- #
 
 @app.route("/")
 def login_page():
+    return render_template("login.html")
+
+@app.route("/login")
+def login_get():
     return render_template("login.html")
 
 @csrf.exempt
@@ -433,11 +467,27 @@ def get_column_map():
     mapping = load_column_map()
     return jsonify(mapping or {})
 
+@csrf.exempt
 @app.route("/save_column_map", methods=["POST"])
 @role_required("admin")
 def save_mapping():
-    save_column_map(request.json)
-    return jsonify({"success": True})
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "Request body must be valid JSON"}), 400
+        
+        # Validate required fields
+        required_fields = ["reg_no", "event", "college"]
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"error": f"Missing required field: {field}"}), 400
+        
+        save_column_map(data)
+        return jsonify({"success": True})
+        
+    except Exception as e:
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
 
 @app.route("/set_event_code", methods=["POST"])
 @role_required("admin")
@@ -460,10 +510,14 @@ def set_event_code():
 @app.route("/get_events")
 def get_events():
     try:
-        # Return all events from the DEFAULT_EVENT_CODES dictionary
-        if DEFAULT_EVENT_CODES:
-            events = list(DEFAULT_EVENT_CODES.keys())
-            return jsonify(sorted(events))  # Sort alphabetically for better UX
+        # Get unique events from Excel file ONLY (this is the source of truth)
+        df = load_excel()
+        mapping = load_column_map()
+        
+        if mapping and mapping.get("event") in df.columns:
+            events = df[mapping["event"]].dropna().unique().tolist()
+            events = [e for e in events if str(e).strip()]  # Remove empty values
+            return jsonify(sorted(events))  # Sort alphabetically
         else:
             return jsonify([])
     except Exception as e:
@@ -682,9 +736,62 @@ def get_colleges():
     return jsonify(colleges)
 
 
-@app.route("/init_event_codes", methods=["POST"])
+@app.route("/get_event_codes_admin")
 @role_required("admin")
-def init_event_codes():
+def get_event_codes_admin():
+    """Get all event codes for admin"""
+    try:
+        codes = load_event_codes()
+        return jsonify(codes)
+    except Exception as e:
+        print(f"Error loading event codes: {e}")
+        return jsonify({})
+
+@csrf.exempt
+@app.route("/save_event_codes_admin", methods=["POST"])
+@role_required("admin")
+def save_event_codes_admin():
+    """Save event codes from admin panel"""
+    try:
+        data = request.get_json(silent=True) or {}
+        
+        if not data:
+            return jsonify({"error": "No codes provided"}), 400
+        
+        # Save the codes
+        save_event_codes(data)
+        
+        return jsonify({"success": True, "message": f"Saved {len(data)} event codes"})
+    except Exception as e:
+        print(f"Error saving event codes: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@csrf.exempt
+@app.route("/change_user_password", methods=["POST"])
+@role_required("admin", "super_admin")
+def change_user_password():
+    """Change password for a user"""
+    try:
+        data = request.get_json(silent=True) or {}
+        user = data.get("user")
+        new_password = data.get("new_password")
+        
+        if not user or not new_password:
+            return jsonify({"error": "User and password required"}), 400
+        
+        if user not in USERS:
+            return jsonify({"error": "User not found"}), 400
+        
+        if len(new_password) < 6:
+            return jsonify({"error": "Password must be at least 6 characters"}), 400
+        
+        # Update the password
+        USERS[user]["password"] = new_password
+        
+        return jsonify({"success": True, "message": f"Password updated for {user}"})
+    except Exception as e:
+        print(f"Error changing password: {e}")
+        return jsonify({"error": str(e)}), 500
     """Initialize event codes from Excel events"""
     try:
         df = load_excel()
@@ -768,16 +875,25 @@ def get_registration():
     if not reg_no:
         return jsonify({"error": "Registration number missing"}), 400
 
+    print(f"DEBUG: Searching for registration: {reg_no}")
+    
     df = load_excel()
     mapping = load_column_map()
     status = load_status()
 
+    print(f"DEBUG: Available reg_no values: {df[mapping['reg_no']].tolist()[:10]}")  # Show first 10
+    print(f"DEBUG: Looking for exact match: '{reg_no}'")
+
     row = df[df[mapping["reg_no"]] == reg_no]
     if row.empty:
+        print(f"DEBUG: Registration {reg_no} not found")
         return jsonify({"error": "Not found"}), 404
 
     row = row.iloc[0]
     team = get_team_for_reg(reg_no, row, mapping, status)
+    
+    print(f"DEBUG: Found team: {team}")
+    print(f"DEBUG: Team size: {len(team)}")
 
     return jsonify({
         "success": True,
@@ -903,16 +1019,40 @@ def verify_event_code():
     if not event or not code:
         return jsonify({"success": False, "error": "Event and code required"}), 400
 
+    # Get actual events from Excel file
+    try:
+        df = load_excel()
+        mapping = load_column_map()
+        
+        if mapping and mapping.get("event") in df.columns:
+            excel_events = df[mapping["event"]].dropna().unique().tolist()
+            excel_events = [e for e in excel_events if str(e).strip()]
+        else:
+            excel_events = []
+    except:
+        excel_events = []
+    
+    # Check if event exists in Excel
+    if event not in excel_events:
+        return jsonify({"success": False, "error": "Event not found in system"}), 400
+
+    # For now, accept any non-empty code (or you can load from event_codes.json if it has codes)
     event_codes = load_event_codes()
-
-    if event not in event_codes:
-        return jsonify({"success": False, "error": "Event code not configured"}), 400
-
-    if event_codes[event].upper() == code.upper():
-        session["verified_event"] = event   # 🔐 LOCK EVENT
-        return jsonify({"success": True})
-
-    return jsonify({"success": False, "error": "Invalid code"}), 401
+    
+    # If code exists in codes file, verify it; otherwise accept any code
+    if event in event_codes:
+        if event_codes[event].upper() == code.upper():
+            session["verified_event"] = event
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": "Invalid code"}), 401
+    else:
+        # Event not in codes file, accept any non-empty code
+        if code.strip():
+            session["verified_event"] = event
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": "Code required"}), 400
 
 
 # --------------------------------------------------
@@ -921,7 +1061,11 @@ def verify_event_code():
 @csrf.exempt
 @event_verified_required
 @app.route("/get_reported_teams", methods=["POST"])
+@event_verified_required
 def get_reported_teams():
+    # DEBUG: Print available columns once
+    df = load_excel()
+    print(f"AVAILABLE EXCEL COLUMNS: {list(df.columns)}")
     data = request.get_json(silent=True) or {}
     event = data.get("event")
 
@@ -933,7 +1077,9 @@ def get_reported_teams():
     event_started = False
 
     for reg_no, info in status.items():
+        print(f"DEBUG: Checking {reg_no}: reported={info.get('reported')}, event={info.get('event')}, looking_for={event}")
         if info.get("reported") and info.get("event") == event:
+            print(f"DEBUG: Found matching registration: {reg_no}")
             event_started |= info.get("event_started", False)
 
             row = df[df[mapping["reg_no"]] == reg_no]
@@ -943,26 +1089,29 @@ def get_reported_teams():
             team = get_team_for_reg(reg_no, row.iloc[0], mapping, status)
 
             college = ""
-            if mapping.get("college") and mapping["college"] in row.iloc[0]:
+            if mapping.get("college") and mapping["college"] in df.columns:
                 college = str(row.iloc[0][mapping["college"]])
 
-            # Extract contact/phone number from Excel
+            # Extract contact/phone number from Excel using mapped column
             contact = ""
             row_data = row.iloc[0]
             
-            # Try to find contact/phone column in mapping first
+            # Use the mapped contact column name from column_map.json
             if mapping.get("contact"):
                 contact_col = mapping["contact"]
-                if contact_col in row_data and pd.notna(row_data[contact_col]):
-                    contact = str(row_data[contact_col]).strip()
-            
-            # If not in mapping, try to find by column name pattern
-            if not contact:
-                for col in df.columns:
-                    col_lower = str(col).lower()
-                    if any(keyword in col_lower for keyword in ["contact", "phone", "mobile", "number"]):
-                        if col in row_data and pd.notna(row_data[col]):
-                            contact = str(row_data[col]).strip()
+                
+                # Try exact match first
+                if contact_col in df.columns:
+                    val = row_data[contact_col]
+                    if pd.notna(val):
+                        contact = str(val).strip()
+                # If not found, try case-insensitive match
+                else:
+                    for col in df.columns:
+                        if col.strip().lower() == contact_col.strip().lower():
+                            val = row_data[col]
+                            if pd.notna(val):
+                                contact = str(val).strip()
                             break
 
             result.append({
@@ -1052,19 +1201,27 @@ def completed_events():
     for reg_no, data in status.items():
         if data.get("event_ended"):
             team = []
+            college = ""
             
             if df is not None and not df.empty and mapping and mapping.get("reg_no"):
                 try:
                     row = df[df[mapping["reg_no"]] == reg_no]
                     if not row.empty:
                         team = get_team_for_reg(reg_no, row.iloc[0], mapping, status)
+                        # Get college name
+                        if mapping.get("college") and mapping["college"] in df.columns:
+                            college_val = row.iloc[0][mapping["college"]]
+                            if pd.notna(college_val):
+                                college = str(college_val)
                 except:
                     team = []
+                    college = ""
             
             completed[reg_no] = {
                 "event": data.get("event", ""),
                 "position": data.get("position"),
-                "team": team
+                "team": team,
+                "college": college
             }
     
     return jsonify(completed)
@@ -1146,15 +1303,21 @@ def calculate_champion():
     df = load_excel()
     mapping = load_column_map()
     
+    print(f"DEBUG: Status data: {status}")
+    print(f"DEBUG: Total events in status: {len(status)}")
+    
     college_points = {}
     
     for reg_no, data in status.items():
+        print(f"DEBUG: Processing {reg_no}: {data}")
         if not data.get("event_ended") or "position" not in data:
+            print(f"DEBUG: Skipping {reg_no} - event not ended or no position")
             continue
         
         event = data.get("event")
         position = data.get("position")
         rating = ratings.get(event, 3)  # Default to 3 stars
+        print(f"DEBUG: Event: {event}, Position: {position}, Rating: {rating}")
         
         # Get college name
         college = ""
