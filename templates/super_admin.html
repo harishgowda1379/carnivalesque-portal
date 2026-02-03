@@ -249,14 +249,77 @@
         .stars {
             color: var(--neon-gold);
         }
+
+        /* Reset Winners Button */
+        .reset-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 75, 75, 0.1);
+            border: 1px solid rgba(255, 75, 75, 0.5);
+            color: #ff4b4b;
+            font-family: 'Raleway', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: rgba(255, 75, 75, 0.2);
+            border-color: #ff4b4b;
+            box-shadow: 0 0 15px rgba(255, 75, 75, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .reset-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Floating Back Button */
+        .floating-back-btn {
+            position: fixed;
+            top: 5px;
+            left: 15px;
+            width: 40px;
+            height: 40px;
+            background: #6c757d;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .floating-back-btn:hover {
+            background: #545b62;
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
     </style>
 </head>
+
+<a href="/login" class="floating-back-btn">←</a>
 
 <body>
     <div class="stars-container" id="stars"></div>
 
     <header>
-        <a href="/login" class="back-to-login-btn">← Back to Login</a>
         Super Admin Control Panel
     </header>
 
@@ -343,6 +406,19 @@
 
                         const card = document.createElement("div");
                         card.className = "event-card";
+                        
+                        // Add reset button if event has winners and is completed
+                        let resetButtonHtml = "";
+                        if (winners.length > 0 && e.event_ended) {
+                            resetButtonHtml = `
+                                <div class="reset-section">
+                                    <button class="reset-btn" onclick="resetWinners('${event}')">
+                                        🔄 Reset Winners
+                                    </button>
+                                </div>
+                            `;
+                        }
+                        
                         card.innerHTML = `
                             <div class="event-header">
                                 <div class="event-title">${event}</div>
@@ -355,6 +431,7 @@
                                 <strong>Winners</strong>
                                 ${winnersHtml}
                             </div>
+                            ${resetButtonHtml}
                         `;
                         container.appendChild(card);
                     });
@@ -413,6 +490,31 @@
                     btn.disabled = false;
                     document.getElementById("championResults").innerHTML = "<div class='loading'>Error calculating champion</div>";
                 });
+        }
+
+        function resetWinners(eventName) {
+            if (!confirm(`Are you sure you want to reset winners for "${eventName}"? This will allow the coordinator to reassign winners.`)) {
+                return;
+            }
+
+            fetch("/reset_winners", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ event: eventName })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Winners for "${eventName}" have been reset. The coordinator can now reassign them.`);
+                    loadDashboard(); // Refresh the dashboard
+                } else {
+                    alert(`Error resetting winners: ${data.error || 'Unknown error'}`);
+                }
+            })
+            .catch(error => {
+                console.error("Error resetting winners:", error);
+                alert("Error resetting winners. Please try again.");
+            });
         }
 
         // Load dashboard on page load

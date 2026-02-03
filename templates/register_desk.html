@@ -1,826 +1,1663 @@
     <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Registration Desk - Carnivalesque 26</title>
+
     <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Raleway:wght@200;400;600&display=swap" rel="stylesheet">
 
+
+
     <style>
+
         :root {
-            --neon-purple: #ba68ff;
-            --glass-bg: rgba(255, 255, 255, 0.02);
-            --border-glow: rgba(186, 104, 255, 0.3);
-            --core-flare: rgba(186, 104, 255, 0.15);
+
+            --neon-purple: #0dba64;
+
+            --neon-blue: #10ed1f;
+
+            --neon-gold: #ffcc00;
+
+            --glass: rgba(255, 255, 255, 0.03);
+
+            --glass-border: rgba(255, 255, 255, 0.1);
+
+            --border-glow: rgba(13, 186, 100, 0.4);
+
+            --core-flare: rgba(13, 186, 100, 0.15);
+
         }
+
+
 
         * {
+
             margin: 0; padding: 0; box-sizing: border-box;
+
         }
+
+
 
         body {
+
             font-family: 'Raleway', sans-serif;
-            background-color: #050505;
-            background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), 
-                              url('/static/images/background.jpg');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            min-height: 100vh;
+
+            background: #050505;
+
             color: #fff;
+
+            min-height: 100vh;
+
             overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
+
         }
+
+
 
         /* Ambient Glow */
+
         body::after {
+
             content: ''; position: fixed; bottom: -150px; left: 50%; transform: translateX(-50%);
+
             width: 800px; height: 400px; background: radial-gradient(circle, var(--core-flare) 0%, transparent 70%);
+
             filter: blur(60px); z-index: -1; pointer-events: none;
+
         }
+
+
 
         /* Starfield Background */
+
         .stars-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+
         .star { position: absolute; background: white; border-radius: 50%; opacity: 0.5; animation: twinkle var(--duration) infinite ease-in-out; }
+
         @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(1); } 50% { opacity: 1; transform: scale(1.4); } }
 
+
+
         header {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+
+            background: rgba(0, 0, 0, 0.5);
+
+            backdrop-filter: blur(15px);
+
+            -webkit-backdrop-filter: blur(15px);
+
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
             padding: 25px;
+
             text-align: center;
+
             font-family: 'Syncopate', sans-serif;
+
             letter-spacing: 8px;
+
             text-transform: uppercase;
+
             font-size: 18px;
+
             color: #fff;
+
             text-shadow: 0 0 15px var(--neon-purple);
+
             position: sticky; top: 0; z-index: 100;
+
             position: relative;
+
         }
 
-        .back-to-login-btn {
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            padding: 8px 16px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: rgba(255,255,255,0.8);
+
+
+        /* Floating Back Button */
+
+        .floating-back-btn {
+
+            position: fixed;
+
+        
+ 
+            left: 15px;
+
+            width: 40px;
+
+            height: 40px;
+
+            background: #6c757d;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
             text-decoration: none;
-            font-family: 'Raleway', sans-serif;
-            font-size: 12px;
-            border-radius: 4px;
+
+            color: #ffffff;
+
+            font-size: 16px;
+
+            font-weight: bold;
+
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
             transition: all 0.3s ease;
+
+            z-index: 1000;
+
         }
 
-        .back-to-login-btn:hover {
-            background: rgba(255,255,255,0.2);
-            border-color: rgba(255,255,255,0.4);
-            color: #fff;
-            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+        .floating-back-btn:hover {
+
+            background: #545b62;
+
+            transform: scale(1.1);
+
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+
         }
 
         @media (max-width: 768px) {
+
             header {
+
                 padding-left: 100px;
+
                 text-align: center;
+
             }
-            .back-to-login-btn {
-                padding: 6px 12px;
-                font-size: 10px;
-                left: 10px;
+
+            .detail-row {
+                flex-direction: column;
+                gap: 8px;
+                padding: 15px 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             }
+
+            .detail-row .label {
+                color: rgba(255, 255, 255, 0.4);
+                text-transform: uppercase;
+                font-size: 11px;
+                letter-spacing: 2px;
+                margin-bottom: 4px;
+            }
+
+            .detail-row .value {
+                color: #fff;
+                font-weight: 600;
+                letter-spacing: 1px;
+                word-break: break-word;
+                line-height: 1.3;
+            }
+
         }
-            max-width: 800px;
-            margin: 60px auto;
+
+
+
+        .container {
+
+            max-width: 600px;
+
+            margin: 40px auto;
+
             padding: 0 20px;
+
             position: relative;
+
             z-index: 10;
+
         }
+
+
 
         .card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            padding: 50px;
-            border-radius: 2px; /* Sharp modernist edges */
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 0 60px rgba(0,0,0,0.5);
-            animation: fadeIn 1s ease-out;
+
+            background: var(--glass);
+
+            backdrop-filter: blur(20px);
+
+            -webkit-backdrop-filter: blur(20px);
+
+            padding: 30px;
+
+            border-radius: 4px;
+
+            border: 1px solid var(--glass-border);
+
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+
+        .form-group {
+
+            margin-bottom: 20px;
+
+        }
+
+
 
         .form-group label {
-            font-family: 'Syncopate', sans-serif;
-            font-size: 10px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            margin-bottom: 15px;
+
             display: block;
-            color: rgba(255, 255, 255, 0.6);
+
+            margin-bottom: 8px;
+
+            font-family: 'Raleway', sans-serif;
+
+            font-size: 12px;
+
+            letter-spacing: 1px;
+
+            text-transform: uppercase;
+
+            color: rgba(255, 255, 255, 0.7);
+
         }
+
+
 
         input {
+
             width: 100%;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.4);
+
+            padding: 15px;
+
+            background: rgba(255, 255, 255, 0.05);
+
             border: 1px solid rgba(255, 255, 255, 0.1);
+
             color: #fff;
+
             font-family: 'Raleway', sans-serif;
-            letter-spacing: 4px;
-            font-size: 16px;
-            transition: 0.4s;
-            margin-bottom: 20px;
+
+            font-size: 14px;
+
+            border-radius: 4px;
+
+            transition: 0.3s;
+
         }
+
+
 
         input:focus {
-            outline: none; border-color: var(--neon-purple); background: rgba(0, 0, 0, 0.6);
-            box-shadow: 0 0 20px var(--border-glow);
+
+            outline: none; 
+
+            border-color: var(--neon-purple); 
+
+            background: rgba(0, 0, 0, 0.3);
+
+            box-shadow: 0 0 15px var(--border-glow);
+
         }
+
+
 
         button {
+
             width: 100%;
-            padding: 22px;
-            font-family: 'Syncopate', sans-serif;
+
+            padding: 15px;
+
+            font-family: 'Raleway', sans-serif;
+
             font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 5px;
+
+            font-weight: 600;
+
+            letter-spacing: 2px;
+
             text-transform: uppercase;
-            background: transparent;
-            color: var(--neon-purple);
-            border: 1px solid var(--neon-purple);
+
+            background: var(--neon-purple);
+
+            color: #000;
+
+            border: none;
+
+            border-radius: 4px;
+
             cursor: pointer;
-            transition: 0.4s;
+
+            transition: 0.3s;
+
             margin-top: 10px;
+
         }
+
+
 
         button:hover:not(:disabled) {
-            background: var(--neon-purple); color: #000; box-shadow: 0 0 40px var(--border-glow);
+
+            background: #0fa254;
+
+            box-shadow: 0 0 20px var(--border-glow);
+
         }
 
-        /* DETAILS BOX */
-        .details {
-            margin-top: 40px;
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            display: none;
-            animation: slideUp 0.6s ease-out;
+
+
+        button:disabled {
+
+            opacity: 0.5;
+
+            cursor: not-allowed;
+
         }
+
+
+
+        /* DETAILS BOX */
+
+        .details {
+
+            margin-top: 40px;
+
+            padding: 30px;
+
+            background: rgba(255, 255, 255, 0.02);
+
+            border: 1px solid rgba(255, 255, 255, 0.05);
+
+            display: none;
+
+            animation: slideUp 0.6s ease-out;
+
+        }
+
+
 
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+
+
         .detail-row {
+
             display: flex;
+
             justify-content: space-between;
+
             padding: 15px 0;
+
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
         }
+
+
 
         .detail-row .label { color: rgba(255, 255, 255, 0.4); text-transform: uppercase; font-size: 11px; letter-spacing: 2px; }
+
         .detail-row .value { color: #fff; font-weight: 600; letter-spacing: 1px; }
 
+
+
         .badge {
+
             margin-top: 30px; margin-bottom: 15px;
+
             display: inline-block; padding: 8px 15px;
+
             border: 1px solid var(--neon-purple); color: var(--neon-purple);
+
             font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+
         }
+
+
 
         .sub-actions {
+
             margin-top: 18px;
+
             display: flex;
+
             gap: 12px;
+
             flex-wrap: wrap;
+
         }
+
+
 
         .btn-secondary {
+
             border-color: rgba(255,255,255,0.25);
+
             color: rgba(255,255,255,0.85);
+
         }
+
         .btn-secondary:hover:not(:disabled) {
+
             background: rgba(255,255,255,0.15);
+
             color: #fff;
+
             box-shadow: 0 0 35px rgba(255,255,255,0.08);
+
             border-color: rgba(255,255,255,0.35);
+
         }
+
+
 
         .editor {
+
             margin-top: 18px;
+
             padding: 20px;
+
             border: 1px solid rgba(255,255,255,0.08);
+
             background: rgba(0,0,0,0.25);
+
             display: none;
+
         }
+
+
 
         .editor-grid {
+
             display: grid;
+
             grid-template-columns: 1fr;
+
             gap: 12px;
+
         }
+
+
 
         .member-row {
+
             display: grid;
+
             grid-template-columns: 36px 1fr 44px;
+
             gap: 10px;
+
             align-items: center;
+
         }
+
+
 
         .member-tag {
+
             font-family: 'Syncopate', sans-serif;
+
             font-size: 10px;
+
             letter-spacing: 2px;
+
             color: rgba(255,255,255,0.55);
+
         }
+
+
 
         .member-row input {
+
             margin-bottom: 0;
+
             letter-spacing: 1px;
+
         }
+
+
 
         .icon-btn {
+
             width: 44px;
+
             padding: 0;
+
             height: 44px;
+
             border: 1px solid rgba(255,255,255,0.2);
+
             color: rgba(255,255,255,0.8);
+
             background: transparent;
+
         }
+
         .icon-btn:hover:not(:disabled) {
+
             background: rgba(255, 75, 75, 0.18);
+
             border-color: rgba(255, 75, 75, 0.7);
+
             color: #ffb3b3;
+
             box-shadow: 0 0 25px rgba(255, 75, 75, 0.2);
+
         }
+
+
 
         .hint {
+
             margin-top: 10px;
+
             color: rgba(255,255,255,0.45);
+
             font-size: 12px;
+
             letter-spacing: 1px;
+
         }
 
+
+
         ul li {
+
             padding: 12px 0; font-size: 15px; color: rgba(255, 255, 255, 0.8);
+
             border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+
             display: flex; align-items: center; gap: 10px;
+
         }
+
+
 
         ul li:first-child { color: var(--neon-purple); font-weight: 600; }
 
+
+
         #markBtn { border-color: #00ffcc; color: #00ffcc; margin-top: 30px; }
+
         #markBtn:hover { background: #00ffcc; color: #000; box-shadow: 0 0 40px rgba(0, 255, 204, 0.3); }
 
+
+
         .error, .success {
+
             margin-top: 25px; padding: 20px; font-size: 13px; text-transform: uppercase; letter-spacing: 2px; text-align: center;
+
         }
+
         .error { border: 1px solid #ff4b4b; color: #ff4b4b; background: rgba(255, 75, 75, 0.1); }
+
         .success { border: 1px solid #00ffcc; color: #00ffcc; background: rgba(0, 255, 204, 0.1); }
 
+
+
         /* QR Code Section */
+
         .qr-section {
+
             margin-top: 40px;
+
             padding: 30px;
+
             background: rgba(255, 255, 255, 0.02);
+
             border: 1px solid rgba(255, 255, 255, 0.05);
+
             text-align: center;
+
         }
+
+
 
         .qr-title {
+
             font-family: 'Syncopate', sans-serif;
+
             font-size: 10px;
+
             letter-spacing: 3px;
+
             text-transform: uppercase;
+
             color: rgba(255, 255, 255, 0.7);
+
             margin-bottom: 20px;
+
         }
+
+
 
         .qr-code-container {
+
             display: inline-block;
+
             padding: 20px;
+
             background: #fff;
+
             border-radius: 4px;
+
             margin-bottom: 15px;
+
         }
+
+
 
         .qr-code-container img {
+
             display: block;
+
             max-width: 250px;
+
             height: auto;
+
         }
+
+
 
         .qr-hint {
+
             color: rgba(255, 255, 255, 0.5);
+
             font-size: 11px;
+
             letter-spacing: 1px;
+
             margin-top: 10px;
+
         }
 
+
+
     </style>
+
 </head>
+
+
+
+    <a href="/login" class="floating-back-btn">←</a>
 
 <body>
 
-<div class="stars-container" id="stars"></div>
 
         <header>
         Registry Node
-        <a href="/login" class="back-to-login-btn">← Back to Login</a>
     </header>
 
-        <div class="container">
-            <div class="card">
+        <div class="card">
                 <div class="form-group">
+
                     <label>Accession Number</label>
+
                     <input type="text" id="regNo" placeholder="C26____" value="C26" autocomplete="off" style="font-family: 'Courier New', monospace; letter-spacing: 2px;">
+
                 </div>
+
+
 
                 <button onclick="fetchDetails()" id="fetchBtn">Retrieve Data</button>
 
+
+
                 <div class="details" id="details">
+
                     <div class="detail-row">
+
                         <div class="label">Event</div>
+
                         <div class="value" id="event"></div>
+
                     </div>
+
                     <div class="detail-row">
+
                         <div class="label">College</div>
+
                         <div class="value" id="college"></div>
+
                     </div>
+
                     <div class="detail-row">
+
                         <div class="label">Number of participants</div>
+
                         <div class="value" id="teamSize"></div>
+
                     </div>
+
                     <div class="badge">Team Members</div>
+
                     <ul id="teamList" style="list-style: none;"></ul>
+
                     <div class="sub-actions">
+
                         <button type="button" class="btn-secondary" onclick="toggleEditor()" id="editToggleBtn">Edit / Add Team Members</button>
+
                         <button type="button" class="btn-secondary" onclick="addMemberRow()" id="addMemberBtn">+ Add Member</button>
+
                     </div>
+
                 </div>
+
+
 
                 <div class="editor" id="editor">
+
                     <div class="editor-title">Team Editor (Max 20)</div>
+
                     <div class="editor-grid" id="editorGrid"></div>
+
                     <div class="hint">Tip: first name is treated as Leader/Primary. Empty rows are ignored.</div>
+
                     <button type="button" onclick="saveTeamMembers()" id="saveTeamBtn" style="margin-top: 18px;">Save Team Members</button>
+
                 </div>
 
+
+
             <button type="button" onclick="markReported();" id="markBtn">Authorize & Report Entry</button>
+
         </div>
+
+
 
         <div class="error" id="error"></div>
+
         <div class="success" id="success">Unit Transmission Successful: Marked as Reported</div>
 
+
+
         <!-- QR Code Section for Spot Registration -->
+
         <div class="qr-section">
+
             <div class="qr-title">Spot Registration QR Code</div>
+
             <div class="qr-code-container">
+
                 <img src="/qr-code" alt="Spot Registration QR Code" id="qrCodeImg">
+
             </div>
+
             <div class="qr-hint">Scan this QR code for on-site spot registration</div>
+
         </div>
+
     </div>
+
 </div>
 
+
+
 <script>
-    // Starfield Generator
-    const starsContainer = document.getElementById('stars');
-    for (let i = 0; i < 100; i++) {
-        const star = document.createElement('div');
-        star.className = 'star';
-        const size = Math.random() * 2 + 'px';
-        star.style.width = size; star.style.height = size;
-        star.style.top = Math.random() * 100 + '%';
-        star.style.left = Math.random() * 100 + '%';
-        star.style.setProperty('--duration', Math.random() * 3 + 2 + 's');
-        starsContainer.appendChild(star);
-    }
+
+
 
     let currentReg = "";
+
     let currentTeam = [];
+
     let currentEventMax = 20; // Default max team members
 
+
+
     function fetchDetails() {
+
         const errorDiv = document.getElementById("error");
+
         const successDiv = document.getElementById("success");
+
         const fetchBtn = document.getElementById("fetchBtn");
+
         
+
         errorDiv.style.display = "none";
+
         successDiv.style.display = "none";
 
+
+
         const regNo = document.getElementById("regNo").value.trim();
+
         currentReg = regNo;
 
+
+
         if (!regNo) {
+
             errorDiv.textContent = "Identifier Required";
+
             errorDiv.style.display = "block";
+
+            // Show QR code when no registration number
+
+            document.querySelector(".qr-section").style.display = "block";
+
             return;
+
         }
 
+
+
         fetchBtn.innerText = "SCANNING...";
+
         fetchBtn.disabled = true;
 
+
+
         fetch("/get_registration", {
+
     method: "POST",
+
     headers: {
+
         "Content-Type": "application/json"
+
     },
+
     body: JSON.stringify({ regNo: regNo })   // ✅ camelCase
+
 })
 
+
+
         .then(res => res.json())
+
         .then(data => {
+
             fetchBtn.innerText = "RETRIEVE DATA";
+
             fetchBtn.disabled = false;
 
+
+
             if (data.error) {
+
                 errorDiv.textContent = "Data Not Found";
+
                 errorDiv.style.display = "block";
+
                 document.getElementById("details").style.display = "none";
+
                 return;
+
             }
 
+
+
             document.getElementById("event").textContent = data.event;
+
             document.getElementById("college").textContent = data.college;
+
             document.getElementById("teamSize").textContent = data.team_size;
+
+
 
             currentTeam = Array.isArray(data.team) ? data.team.slice() : [];
 
+
+
             // Fetch event requirements for team member validation
+
             fetch("/get_event_requirements?event=" + encodeURIComponent(data.event))
+
                 .then(res => res.json())
+
                 .then(reqData => {
+
                     console.log("DEBUG: Event requirements for", data.event, ":", reqData);
+
                     if (reqData.max) {
+
                         currentEventMax = reqData.max;
+
                         console.log("DEBUG: Set currentEventMax to:", currentEventMax);
+
                         // Update add member button text with limit
+
                         const addBtn = document.getElementById("addMemberBtn");
+
                         if (addBtn) {
+
                             addBtn.textContent = `+ Add Member (${currentTeam.length}/${reqData.max})`;
+
                         }
+
                     } else {
+
                         console.log("DEBUG: No max value in requirements, using default 20");
+
                         currentEventMax = 20;
+
                     }
+
                 })
+
                 .catch(err => {
+
                     console.log("Could not fetch event requirements");
+
                     currentEventMax = 20; // Default fallback
+
                 });
 
+
+
             const list = document.getElementById("teamList");
+
             list.innerHTML = "";
+
             currentTeam.forEach((m, i) => {
+
                 const li = document.createElement("li");
+
                 li.innerHTML = i === 0 ? `<span style="opacity:0.5">◈</span> ${m} (Primary)` : `<span style="opacity:0.3">○</span> ${m}`;
+
                 list.appendChild(li);
+
             });
+
+
 
             // reset editor to match fetched team
+
             hideEditor();
+
             renderEditorFromTeam(currentTeam);
 
+
+
             document.getElementById("details").style.display = "block";
+
+            
+
+            // Hide QR code when data is retrieved
+
+            document.querySelector(".qr-section").style.display = "none";
+
         })
+
         .catch(err => {
+
             fetchBtn.innerText = "RETRIEVE DATA";
+
             fetchBtn.disabled = false;
+
             errorDiv.textContent = "Link Failure";
+
             errorDiv.style.display = "block";
+
         });
+
     }
+
+
 
     function markReported() {
+
         console.log("DEBUG: markReported called, currentReg:", currentReg);
+        
+        // Check if we have a current registration
+        if (!currentReg) {
+            document.getElementById("error").textContent = "Please fetch a registration first";
+            document.getElementById("error").style.display = "block";
+            return;
+        }
+
         const markBtn = document.getElementById("markBtn");
+
         markBtn.innerText = "UPLOADING...";
+
         markBtn.disabled = true;
 
+
+
         const requestData = { reg_no: currentReg };
+
         console.log("DEBUG: Sending request:", requestData);
 
+
+
         fetch("/mark_reported", {
+
             method: "POST",
+
             headers: {"Content-Type": "application/json"},
+
             body: JSON.stringify(requestData)
+
         })
+
         .then(res => {
+
             console.log("DEBUG: Response status:", res.status);
+
             return res.json();
+
         })
+
         .then(data => {
+
             console.log("DEBUG: Response data:", data);
+
             if (data.error) {
+
                 document.getElementById("error").textContent = data.error;
+
                 document.getElementById("error").style.display = "block";
+
                 markBtn.innerText = "AUTHORIZE & REPORT ENTRY";
+
                 markBtn.disabled = false;
+
             } else {
+
                 document.getElementById("success").style.display = "block";
+
                 document.getElementById("details").style.display = "none";
+
                 document.getElementById("regNo").value = "";
+
                 
+
                 // Clear all old member details
+
                 document.getElementById("event").textContent = "";
+
                 document.getElementById("college").textContent = "";
+
                 document.getElementById("teamSize").textContent = "";
+
                 document.getElementById("teamList").innerHTML = "";
+
                 
+
                 // Clear editor grid
+
                 document.getElementById("editorGrid").innerHTML = "";
+
                 
+
                 // Reset variables
+
                 currentReg = "";
+
                 currentTeam = [];
+
                 currentEventMax = 20;
+
                 
+
                 // Reset add member button
+
                 const addBtn = document.getElementById("addMemberBtn");
+
                 if (addBtn) {
+
                     addBtn.textContent = "+ Add Member";
+
                     addBtn.disabled = false;
+
                     addBtn.style.opacity = "1";
+
                 }
+
                 
+
                 // Hide editor
+
                 hideEditor();
+
                 
+
                 markBtn.innerText = "AUTHORIZE & REPORT ENTRY";
+
                 markBtn.disabled = false;
+
                 return;
+
             }
+
+
 
             document.getElementById("success").style.display = "block";
+
             document.getElementById("details").style.display = "none";
+
             document.getElementById("regNo").value = "";
+
             
+
             // Clear all old member details
+
             document.getElementById("event").textContent = "";
+
             document.getElementById("college").textContent = "";
+
             document.getElementById("teamSize").textContent = "";
+
             document.getElementById("teamList").innerHTML = "";
+
             
+
             // Clear editor grid
+
             document.getElementById("editorGrid").innerHTML = "";
+
             
+
             // Reset variables
+
             currentReg = "";
+
             currentTeam = [];
+
             currentEventMax = 20;
+
             
+
             // Reset add member button
+
             const addBtn = document.getElementById("addMemberBtn");
+
             if (addBtn) {
+
                 addBtn.textContent = "+ Add Member";
+
                 addBtn.disabled = false;
+
                 addBtn.style.opacity = "1";
+
             }
+
             
+
             // Hide editor
+
             hideEditor();
+
             
+
             markBtn.innerText = "AUTHORIZE & REPORT ENTRY";
+
             markBtn.disabled = false;
+
         });
+
     }
+
+
 
     function hideEditor() {
+
         document.getElementById("editor").style.display = "none";
+
         document.getElementById("editToggleBtn").innerText = "Edit / Add Team Members";
+
     }
+
+
 
     function toggleEditor() {
+
         const editor = document.getElementById("editor");
+
         const btn = document.getElementById("editToggleBtn");
+
         const isOpen = editor.style.display === "block";
+
         if (isOpen) {
+
             hideEditor();
+
         } else {
+
             editor.style.display = "block";
+
             btn.innerText = "Close Editor";
+
         }
+
     }
+
+
 
     function renderEditorFromTeam(team) {
+
         const grid = document.getElementById("editorGrid");
+
         grid.innerHTML = "";
 
+
+
         const initial = (Array.isArray(team) && team.length > 0) ? team : [""];
+
         initial.forEach((name, idx) => {
+
             addMemberRow(name, idx + 1);
+
         });
+
     }
+
+
 
     function addMemberRow(prefill = "", forcedIndex = null) {
+
         const grid = document.getElementById("editorGrid");
+
         const rows = grid.querySelectorAll(".member-row");
+
         const currentCount = collectTeamFromEditor().length;
+
         
+
         // Check event-specific limit
+
         if (currentCount >= currentEventMax) {
+
             alert(`Maximum ${currentEventMax} team members allowed for this event.`);
+
             return;
+
         }
+
+
 
         const idx = forcedIndex ?? (rows.length + 1);
+
         const row = document.createElement("div");
+
         row.className = "member-row";
+
         row.innerHTML = `
+
             <div class="member-tag">${idx}</div>
+
             <input type="text" class="member-input" value="${String(prefill).replace(/\"/g, '&quot;')}" placeholder="Member name">
+
             <button type="button" class="icon-btn" title="Remove" onclick="removeMemberRow(this)">✕</button>
+
         `;
+
         grid.appendChild(row);
+
         updateAddMemberButton();
+
         return row;
+
     }
+
+
 
     function removeMemberRow(btn) {
+
         const row = btn.closest(".member-row");
+
         if (!row) return;
+
         row.remove();
 
+
+
         // re-number
+
         const grid = document.getElementById("editorGrid");
+
         Array.from(grid.querySelectorAll(".member-row")).forEach((r, i) => {
+
             const tag = r.querySelector(".member-tag");
+
             if (tag) tag.textContent = String(i + 1);
+
         });
+
         
+
         // Update add member button text
+
         updateAddMemberButton();
+
     }
+
+
 
     function updateAddMemberButton() {
+
         const addBtn = document.getElementById("addMemberBtn");
+
         if (addBtn && currentEventMax) {
+
             const currentCount = collectTeamFromEditor().length;
+
             addBtn.textContent = `+ Add Member (${currentCount}/${currentEventMax})`;
+
             
+
             // Disable button if limit reached
+
             if (currentCount >= currentEventMax) {
+
                 addBtn.disabled = true;
+
                 addBtn.style.opacity = "0.5";
+
             } else {
+
                 addBtn.disabled = false;
+
                 addBtn.style.opacity = "1";
+
             }
+
         }
+
     }
+
+
 
     function collectTeamFromEditor() {
+
         const inputs = Array.from(document.querySelectorAll("#editorGrid .member-input"));
+
         const names = inputs.map(i => i.value.trim()).filter(Boolean);
 
+
+
         // dedupe (case-insensitive)
+
         const out = [];
+
         const seen = new Set();
+
         for (const n of names) {
+
             const k = n.toLowerCase();
+
             if (seen.has(k)) continue;
+
             seen.add(k);
+
             out.push(n);
+
         }
+
         return out;
+
     }
+
+
 
     function saveTeamMembers() {
+
         const team = collectTeamFromEditor();
+
         const errorDiv = document.getElementById("error");
+
         const successDiv = document.getElementById("success");
+
         const saveBtn = document.getElementById("saveTeamBtn");
 
+
+
         errorDiv.style.display = "none";
+
         successDiv.style.display = "none";
 
+
+
         if (!currentReg) {
+
             errorDiv.textContent = "Fetch a registration first";
+
             errorDiv.style.display = "block";
+
             return;
+
         }
+
+
 
         saveBtn.innerText = "SAVING...";
+
         saveBtn.disabled = true;
 
+
+
         fetch("/update_team_members", {
+
             method: "POST",
+
             headers: {"Content-Type": "application/json"},
+
             body: JSON.stringify({ reg_no: currentReg, team })
+
         })
+
         .then(res => res.json())
+
         .then(data => {
+
             saveBtn.innerText = "Save Team Members";
+
             saveBtn.disabled = false;
+
+
 
             if (data.error) {
+
                 errorDiv.textContent = data.error;
+
                 errorDiv.style.display = "block";
+
                 return;
+
             }
 
+
+
             currentTeam = team;
+
             const list = document.getElementById("teamList");
+
             list.innerHTML = "";
+
             currentTeam.forEach((m, i) => {
+
                 const li = document.createElement("li");
+
                 li.innerHTML = i === 0 ? `<span style="opacity:0.5">◈</span> ${m} (Primary)` : `<span style="opacity:0.3">○</span> ${m}`;
+
                 list.appendChild(li);
+
             });
+
+
 
             successDiv.textContent = "Team Updated Successfully";
+
             successDiv.style.display = "block";
+
             setTimeout(() => {
+
                 successDiv.style.display = "none";
+
             }, 3000);
+
         })
+
         .catch(err => {
+
             saveBtn.innerText = "Save Team Members";
+
             saveBtn.disabled = false;
+
             errorDiv.textContent = "Failed to Update Team";
+
             errorDiv.style.display = "block";
+
         });
+
     }
 
+
+
     // Registration number input formatting for registration desk
+
     document.addEventListener('DOMContentLoaded', function() {
+
         const regNoInput = document.getElementById("regNo");
+
         
+
         if (regNoInput) {
+
             // Set cursor position after "C26" when focused
+
             regNoInput.addEventListener('focus', function() {
+
                 if (this.value.length === 3) { // Just "C26"
+
                     this.setSelectionRange(3, 3); // Position after "C26"
+
                 }
+
             });
+
             
+
             // Handle input to protect "C26" prefix
+
             regNoInput.addEventListener('input', function(e) {
+
                 let value = this.value;
+
                 
+
                 // Ensure it starts with "C26"
+
                 if (!value.startsWith('C26')) {
+
                     value = 'C26' + value.replace(/^C26/, '');
+
                 }
+
                 
+
                 // Only allow numbers after "C26"
+
                 const afterPrefix = value.substring(3);
+
                 const numericOnly = afterPrefix.replace(/[^0-9]/g, '');
+
                 
+
                 // Limit to 4 digits after "C26"
+
                 const limitedDigits = numericOnly.slice(0, 4);
+
                 
+
                 // Reconstruct the value
+
                 this.value = 'C26' + limitedDigits;
+
                 
+
                 // Move cursor to end if user is typing
+
                 if (this.selectionStart < 3) {
+
                     this.setSelectionRange(this.value.length, this.value.length);
+
                 }
+
             });
+
             
+
             // Handle keypress to prevent deletion of "C26"
+
             regNoInput.addEventListener('keydown', function(e) {
+
                 const start = this.selectionStart;
+
                 const end = this.selectionEnd;
+
                 
+
                 // Prevent backspace/delete on "C26" part
+
                 if ((e.key === 'Backspace' && start <= 3 && end <= 3) ||
+
                     (e.key === 'Delete' && start < 3)) {
+
                     e.preventDefault();
+
                     return;
+
                 }
+
             });
+
             
+
             // Prevent paste of invalid content
+
             regNoInput.addEventListener('paste', function(e) {
+
                 e.preventDefault();
+
                 const pastedData = (e.clipboardData || window.clipboardData).getData('text');
+
                 
+
                 // Extract only numbers from paste
+
                 const numericOnly = pastedData.replace(/[^0-9]/g, '');
+
                 
+
                 // Get current value after "C26"
+
                 const currentAfterPrefix = this.value.substring(3);
+
                 
+
                 // Combine and limit to 4 digits
+
                 const newDigits = (currentAfterPrefix + numericOnly).slice(0, 4);
+
                 
+
                 // Update value
+
                 this.value = 'C26' + newDigits;
+
                 
+
                 // Move cursor to end
+
                 this.setSelectionRange(this.value.length, this.value.length);
+
             });
+
         }
+
     });
+
 </script>
 
+
+
 </body>
+
 </html>
