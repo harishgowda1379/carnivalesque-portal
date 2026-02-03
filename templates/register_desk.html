@@ -991,7 +991,9 @@
 
             fetchBtn.disabled = false;
 
-            errorDiv.textContent = "Link Failure";
+            console.error("Fetch error:", err);
+
+            errorDiv.textContent = `Link Failure: ${err.message || 'Network error'}`;
 
             errorDiv.style.display = "block";
 

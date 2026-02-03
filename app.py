@@ -897,8 +897,8 @@ def get_registration():
 
     return jsonify({
         "success": True,
-        "event": row[mapping["event"]],
-        "college": row[mapping["college"]],
+        "event": str(row[mapping["event"]]) if pd.notna(row[mapping["event"]]) else "Unknown Event",
+        "college": str(row[mapping["college"]]) if pd.notna(row[mapping["college"]]) else "Unknown College",
         "team": team,
         "team_size": len(team)
     })
