@@ -1,28 +1,3 @@
 {
-    "C260001": {
-        "event": "FC26 EA SPORTS",
-        "reported": true,
-        "event_started": false,
-        "event_ended": false
-    },
-    "C260002": {
-        "event": "Carrom (Men)",
-        "reported": true,
-        "event_started": true,
-        "event_ended": true,
-        "position": 1
-    },
-    "C260003": {
-        "event": "Decrypt-X",
-        "reported": true,
-        "event_started": true,
-        "event_ended": true,
-        "position": 1
-    },
-    "C260012": {
-        "event": "Chess (Women)",
-        "reported": true,
-        "event_started": false,
-        "event_ended": false
-    }
+   
 }
