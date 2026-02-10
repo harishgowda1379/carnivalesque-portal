@@ -14,11 +14,18 @@ import time
 from functools import wraps
 import qrcode
 from io import BytesIO
+<<<<<<< HEAD
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)  # Session timeout
+=======
+from datetime import datetime
+
+app = Flask(__name__)
+app.secret_key = secrets.token_hex(32)
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
 csrf = CSRFProtect(app)
 limiter = Limiter(
     app=app,
@@ -40,6 +47,7 @@ STATUS_PATH = os.path.join(BASE_DIR, "data", "status.json")
 EVENT_CODES_PATH = os.path.join(BASE_DIR, "data", "event_codes.json")
 EVENT_RATINGS_PATH = os.path.join(BASE_DIR, "data", "event_ratings.json")
 
+<<<<<<< HEAD
 # Secure hashed passwords using bcrypt
 USERS = {
     "register": {"password_hash": bcrypt.hashpw(b"reg123", bcrypt.gensalt()).decode(), "role": "register"},
@@ -47,6 +55,15 @@ USERS = {
     "certificate": {"password_hash": bcrypt.hashpw(b"cert123", bcrypt.gensalt()).decode(), "role": "certificate"},
     "admin": {"password_hash": bcrypt.hashpw(b"admin123", bcrypt.gensalt()).decode(), "role": "admin"},
     "superadmin": {"password_hash": bcrypt.hashpw(b"super123", bcrypt.gensalt()).decode(), "role": "super_admin"}
+=======
+# Simple passwords (plaintext) - for immediate functionality
+USERS = {
+    "register": {"password": "reg123", "role": "register"},
+    "coordinator": {"password": "coord123", "role": "coordinator"},
+    "certificate": {"password": "cert123", "role": "certificate"},
+    "admin": {"password": "admin123", "role": "admin"},
+    "superadmin": {"password": "super123", "role": "super_admin"}
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
 }
 
 # Event Team Requirements (Min/Max team members)
@@ -183,6 +200,7 @@ def page_role_required(*allowed_roles):
 # ---------------- UTILITIES ---------------- #
 
 def load_excel():
+<<<<<<< HEAD
     # Validate file path and size
     if not os.path.exists(EXCEL_PATH):
         raise FileNotFoundError("Excel file not found")
@@ -197,6 +215,8 @@ def load_excel():
     if not real_path.startswith(allowed_dir):
         raise ValueError("Invalid file path")
     
+=======
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
     return pd.read_excel(EXCEL_PATH)
 
 def load_column_map():
@@ -289,9 +309,20 @@ def extract_team(row, mapping):
     team = []
     seen = set()
 
+<<<<<<< HEAD
     leader_col = mapping.get("team_leader")
     if leader_col and pd.notna(row.get(leader_col)):
         leader = str(row[leader_col]).strip()
+=======
+    print(f"DEBUG: Extracting team for reg_no: {row.get(mapping.get('reg_no', ''), 'Unknown')}")
+    print(f"DEBUG: Available columns: {list(row.index)}")
+    print(f"DEBUG: Row data sample: {dict(row.head(1))}")
+
+    leader_col = mapping.get("team_leader")
+    if leader_col and pd.notna(row.get(leader_col)):
+        leader = str(row[leader_col]).strip()
+        print(f"DEBUG: Found leader: {leader}")
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
         if leader.lower() not in seen:
             team.append(leader)
             seen.add(leader.lower())
@@ -300,6 +331,10 @@ def extract_team(row, mapping):
     for col in mapping.get("team_members", []):
         if col in row and pd.notna(row[col]):
             member = str(row[col]).strip()
+<<<<<<< HEAD
+=======
+            print(f"DEBUG: Found team member in {col}: {member}")
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
             if member.lower() not in seen:
                 team.append(member)
                 seen.add(member.lower())
@@ -309,10 +344,18 @@ def extract_team(row, mapping):
         col_lower = str(col).lower()
         if col_lower in ["participants", "students"] and pd.notna(row[col]):
             member = str(row[col]).strip()
+<<<<<<< HEAD
+=======
+            print(f"DEBUG: Found direct column {col}: {member}")
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
             if member and member.lower() not in seen:
                 team.append(member)
                 seen.add(member.lower())
 
+<<<<<<< HEAD
+=======
+    print(f"DEBUG: Final team: {team}")
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
     return team
 
 # ---------------- TEAM OVERRIDES ---------------- #
@@ -368,7 +411,20 @@ def login_get():
 @app.route("/login", methods=["POST"])
 @limiter.limit("5 per minute")
 def login():
+<<<<<<< HEAD
     # Accept JSON or form data
+=======
+    # ---------------- DEBUG ----------------
+    print("====== LOGIN REQUEST ======")
+    print("Method:", request.method)
+    print("Headers:", dict(request.headers))
+    print("Form:", request.form)
+    print("JSON:", request.get_json(silent=True))
+    print("Raw data:", request.data)
+    print("===========================")
+
+    # -------- ACCEPT JSON OR FORM ----------
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
     data = request.get_json(silent=True)
     if not data:
         data = request.form
@@ -376,13 +432,24 @@ def login():
     username = (data.get("username") or "").strip()
     password = (data.get("password") or "").strip()
 
+<<<<<<< HEAD
     # Input validation
     if not username or not password:
+=======
+    print(f"Username received: '{username}'")
+    print(f"Password received: '{password}'")
+    print("Available users:", list(USERS.keys()))
+
+    # -------- VALIDATION ----------
+    if not username or not password:
+        print("❌ Missing credentials")
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
         return jsonify({
             "success": False,
             "error": "Username and password required"
         }), 400
 
+<<<<<<< HEAD
     # Length limits
     if len(username) > 50 or len(password) > 100:
         return jsonify({
@@ -392,11 +459,19 @@ def login():
 
     user = USERS.get(username)
     if not user:
+=======
+    user = USERS.get(username)
+    print("User found:", bool(user))
+
+    if not user:
+        print("❌ Username not found")
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
         return jsonify({
             "success": False,
             "error": "Invalid username or password"
         }), 401
 
+<<<<<<< HEAD
     # Verify password using bcrypt
     try:
         if not bcrypt.checkpw(password.encode(), user["password_hash"].encode()):
@@ -411,15 +486,42 @@ def login():
         }), 500
 
     # Set session
+=======
+    print("Stored password:", user["password"])
+    print("Password match:", user["password"] == password)
+
+    # -------- PASSWORD CHECK ----------
+    if user["password"] != password:
+        print("❌ Password mismatch")
+        return jsonify({
+            "success": False,
+            "error": "Invalid username or password"
+        }), 401
+
+    # -------- LOGIN SUCCESS ----------
+    session.clear()                     # 🔑 IMPORTANT
+    session["logged_in"] = True
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
     session["username"] = username
     session["role"] = user["role"]
     session.permanent = True
 
+<<<<<<< HEAD
     return jsonify({
         "success": True,
         "role": user["role"],
         "redirect": f"/{user['role'].replace('_', '-')}"
     })
+=======
+    print(f"✅ LOGIN SUCCESS | Role: {user['role']}")
+
+    return jsonify({
+        "success": True,
+        "role": user["role"]
+    }), 200
+
+# ---------- PAGE ROUTES ---------- #
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
 
 @app.route("/register-desk")
 @page_role_required("register")
@@ -461,6 +563,10 @@ def get_column_map():
     mapping = load_column_map()
     return jsonify(mapping or {})
 
+<<<<<<< HEAD
+=======
+@csrf.exempt
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
 @app.route("/save_column_map", methods=["POST"])
 @role_required("admin")
 def save_mapping():
@@ -514,6 +620,7 @@ def get_events():
         else:
             return jsonify([])
     except Exception as e:
+        print("GET_EVENTS ERROR:", e)
         return jsonify([])
 
 @csrf.exempt
@@ -524,6 +631,7 @@ def get_event_requirements():
     if not event:
         return jsonify({"error": "Event name required"}), 400
     
+<<<<<<< HEAD
     # Input validation
     if len(event) > 100:
         return jsonify({"error": "Invalid event name length"}), 400
@@ -544,9 +652,33 @@ def get_event_requirements():
     # If still not found, use default
     if not requirements:
         requirements = {"min": 1, "max": 20}
+=======
+    event = event.strip()
+    
+    # Try exact match first
+    requirements = EVENT_TEAM_REQUIREMENTS.get(event)
+    
+    # If not found, try case-insensitive match
+    if not requirements:
+        event_lower = event.lower()
+        for key, value in EVENT_TEAM_REQUIREMENTS.items():
+            if key.lower() == event_lower:
+                requirements = value
+                print(f"Matched '{event}' to '{key}' (case-insensitive)")
+                break
+    
+    # If still not found, use default (ALWAYS return something so fields show)
+    if not requirements:
+        requirements = {"min": 1, "max": 20}
+        print(f"Event '{event}' not found in requirements, using default min=1, max=20")
+    else:
+        print(f"Found requirements for '{event}': {requirements}")
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
     
     return jsonify(requirements)
 
+@csrf.exempt
+<<<<<<< HEAD
 @app.route("/add_college", methods=["POST"])
 def add_college():
     """Add a new college to the list"""
@@ -586,6 +718,13 @@ def get_colleges():
     """Get list of colleges for dropdown"""
     # Default colleges list
     default_colleges = [
+=======
+@app.route("/get_colleges")
+def get_colleges():
+    """Get list of colleges for dropdown"""
+    # Common colleges list - you can customize this
+    colleges = [
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
         "A P S COLLEGE OF ENGINEERING",
         "ACHARYA BANGLORE BUSINESS SCHOOL",
         "ACHARYA INSTITUTE OF GRADUATE STUDIES",
@@ -758,6 +897,7 @@ def get_colleges():
         "VV PURAM COLLEGE OF ARTS & COMMERCE",
         "Others"
     ]
+<<<<<<< HEAD
     
     # Load custom colleges from file
     try:
@@ -777,7 +917,11 @@ def get_colleges():
         return jsonify(all_colleges)
         
     except Exception as e:
+        print(f"Error loading custom colleges: {e}")
         return jsonify(default_colleges)
+=======
+    return jsonify(colleges)
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
 
 
 @app.route("/get_event_codes_admin")
@@ -788,8 +932,15 @@ def get_event_codes_admin():
         codes = load_event_codes()
         return jsonify(codes)
     except Exception as e:
+<<<<<<< HEAD
         return jsonify({})
 
+=======
+        print(f"Error loading event codes: {e}")
+        return jsonify({})
+
+@csrf.exempt
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
 @app.route("/save_event_codes_admin", methods=["POST"])
 @role_required("admin")
 def save_event_codes_admin():
@@ -805,8 +956,15 @@ def save_event_codes_admin():
         
         return jsonify({"success": True, "message": f"Saved {len(data)} event codes"})
     except Exception as e:
+<<<<<<< HEAD
         return jsonify({"error": "Failed to save event codes"}), 500
 
+=======
+        print(f"Error saving event codes: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@csrf.exempt
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
 @app.route("/change_user_password", methods=["POST"])
 @role_required("admin", "super_admin")
 def change_user_password():
@@ -819,19 +977,34 @@ def change_user_password():
         if not user or not new_password:
             return jsonify({"error": "User and password required"}), 400
         
+<<<<<<< HEAD
         # Input validation
         if len(user) > 50 or len(new_password) > 100:
             return jsonify({"error": "Invalid input length"}), 400
+=======
+        if user not in USERS:
+            return jsonify({"error": "User not found"}), 400
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
         
         if len(new_password) < 6:
             return jsonify({"error": "Password must be at least 6 characters"}), 400
         
+<<<<<<< HEAD
         # Update the password with bcrypt hash
         USERS[user]["password_hash"] = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
         
         return jsonify({"success": True, "message": f"Password updated for {user}"})
     except Exception as e:
         return jsonify({"error": "Failed to update password"}), 500
+=======
+        # Update the password
+        USERS[user]["password"] = new_password
+        
+        return jsonify({"success": True, "message": f"Password updated for {user}"})
+    except Exception as e:
+        print(f"Error changing password: {e}")
+        return jsonify({"error": str(e)}), 500
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
     """Initialize event codes from Excel events"""
     try:
         df = load_excel()
@@ -915,16 +1088,25 @@ def get_registration():
     if not reg_no:
         return jsonify({"error": "Registration number missing"}), 400
 
+    print(f"DEBUG: Searching for registration: {reg_no}")
+    
     df = load_excel()
     mapping = load_column_map()
     status = load_status()
 
+    print(f"DEBUG: Available reg_no values: {df[mapping['reg_no']].tolist()[:10]}")  # Show first 10
+    print(f"DEBUG: Looking for exact match: '{reg_no}'")
+
     row = df[df[mapping["reg_no"]] == reg_no]
     if row.empty:
+        print(f"DEBUG: Registration {reg_no} not found")
         return jsonify({"error": "Not found"}), 404
 
     row = row.iloc[0]
     team = get_team_for_reg(reg_no, row, mapping, status)
+    
+    print(f"DEBUG: Found team: {team}")
+    print(f"DEBUG: Team size: {len(team)}")
 
     return jsonify({
         "success": True,
@@ -937,6 +1119,7 @@ def get_registration():
 
 
 
+@csrf.exempt
 @app.route("/update_team_members", methods=["POST"])
 def update_team_members():
     reg_no = request.json.get("reg_no")
@@ -986,6 +1169,7 @@ def update_team_members():
 
     return jsonify({"success": True, "team_size": len(cleaned)})
 
+@csrf.exempt
 @app.route("/mark_reported", methods=["POST"])
 def mark_reported():
     reg_no = request.json["reg_no"]
@@ -1092,7 +1276,9 @@ def verify_event_code():
 @app.route("/get_reported_teams", methods=["POST"])
 @event_verified_required
 def get_reported_teams():
+    # DEBUG: Print available columns once
     df = load_excel()
+    print(f"AVAILABLE EXCEL COLUMNS: {list(df.columns)}")
     data = request.get_json(silent=True) or {}
     event = data.get("event")
 
@@ -1104,7 +1290,9 @@ def get_reported_teams():
     event_started = False
 
     for reg_no, info in status.items():
+        print(f"DEBUG: Checking {reg_no}: reported={info.get('reported')}, event={info.get('event')}, looking_for={event}")
         if info.get("reported") and info.get("event") == event:
+            print(f"DEBUG: Found matching registration: {reg_no}")
             event_started |= info.get("event_started", False)
 
             row = df[df[mapping["reg_no"]] == reg_no]
@@ -1153,6 +1341,7 @@ def get_reported_teams():
 # --------------------------------------------------
 # ▶ START EVENT (PROTECTED)
 # --------------------------------------------------
+@csrf.exempt
 @event_verified_required
 @app.route("/start_event", methods=["POST"])
 def start_event():
@@ -1177,6 +1366,7 @@ def start_event():
 # --------------------------------------------------
 # 🏁 END EVENT & ASSIGN WINNERS (PROTECTED)
 # --------------------------------------------------
+@csrf.exempt
 @event_verified_required
 @app.route("/end_event", methods=["POST"])
 def end_event():
@@ -1326,15 +1516,21 @@ def calculate_champion():
     df = load_excel()
     mapping = load_column_map()
     
+    print(f"DEBUG: Status data: {status}")
+    print(f"DEBUG: Total events in status: {len(status)}")
+    
     college_points = {}
     
     for reg_no, data in status.items():
+        print(f"DEBUG: Processing {reg_no}: {data}")
         if not data.get("event_ended") or "position" not in data:
+            print(f"DEBUG: Skipping {reg_no} - event not ended or no position")
             continue
         
         event = data.get("event")
         position = data.get("position")
         rating = ratings.get(event, 3)  # Default to 3 stars
+        print(f"DEBUG: Event: {event}, Position: {position}, Rating: {rating}")
         
         # Get college name
         college = ""
@@ -1414,10 +1610,12 @@ def generate_qr_code():
                 port = request.environ.get('SERVER_PORT', '5000')
                 base_url = f"{scheme}://{local_ip}:{port}"
             except Exception as e:
+                print(f"Could not determine local IP: {e}")
                 # Fall back to original URL
-                pass
     
     spot_reg_url = f"{base_url}/spot-registration"
+    
+    print(f"QR Code URL: {spot_reg_url}")  # Debug: print the URL being used
     
     # Create QR code
     qr = qrcode.QRCode(
@@ -1580,8 +1778,10 @@ def submit_spot_registration():
         except portalocker.exceptions.LockException:
             return jsonify({"error": "File is currently being updated by another user. Please wait a moment and try again."}), 503
         except PermissionError as e:
+            print(f"PERMISSION ERROR: {e}")
             return jsonify({"error": "Excel file is currently open in another program. Please close Excel and try again."}), 503
         except Exception as e:
+            print(f"EXCEL WRITE ERROR: {e}")
             return jsonify({"error": f"Failed to save registration: {str(e)}"}), 500
         
         return jsonify({
@@ -1591,6 +1791,7 @@ def submit_spot_registration():
         })
         
     except Exception as e:
+        print(f"SPOT REGISTRATION ERROR: {e}")
         return jsonify({"error": f"Registration failed: {str(e)}"}), 500
 
 # ---------------- RUN ---------------- #
