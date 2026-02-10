@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spot Registration - Carnivalesque 26</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Raleway:wght@200;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --neon-purple: #ba68ff;
+            --neon-green: #00ffcc;
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --border-glow: rgba(186, 104, 255, 0.3);
+        }
+
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Raleway', sans-serif;
+            background-color: #050505;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), 
+                              url('/static/images/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        /* Starfield Background */
+        .stars-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        .star { position: absolute; background: white; border-radius: 50%; opacity: 0.5; animation: twinkle var(--duration) infinite ease-in-out; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(1); } 50% { opacity: 1; transform: scale(1.4); } }
+
+        @font-face {
+            font-family: 'Foxgrab';
+            src: url('/static/fonts/Foxgrab.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px 20px;
+            text-align: center;
+            margin: -20px -20px 30px -20px;
+            position: relative;
+        }
+
+        .back-to-login-btn {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-family: 'Raleway', sans-serif;
+            font-size: 12px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .back-to-login-btn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.4);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding-left: 100px;
+                text-align: center;
+            }
+            .back-to-login-btn {
+                padding: 6px 12px;
+                font-size: 10px;
+                left: 10px;
+            }
+        }
+
+        .header-title {
+            font-family: 'Foxgrab', sans-serif;
+            font-size: clamp(32px, 8vw, 48px);
+            letter-spacing: 6px;
+            color: #ffffff;
+            -webkit-text-fill-color: #ffffff;
+            text-shadow:
+                0 0 12px rgba(255, 255, 255, 0.6),
+                0 0 28px rgba(186, 104, 255, 0.5);
+            margin: 0;
+            transform: translateZ(20px);
+        }
+
+        .header-subtitle {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 10px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            padding: 50px;
+            border-radius: 2px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 60px rgba(0,0,0,0.5);
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 10px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            display: block;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-family: 'Raleway', sans-serif;
+            letter-spacing: 2px;
+            font-size: 16px;
+            transition: 0.4s;
+            margin-bottom: 0;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        select option {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        input:focus, select:focus {
+            outline: none; 
+            border-color: var(--neon-purple); 
+            background: rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 20px var(--border-glow);
+        }
+
+        button {
+            width: 100%;
+            padding: 22px;
+            font-family: 'Syncopate', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            background: transparent;
+            color: var(--neon-green);
+            border: 1px solid var(--neon-green);
+            cursor: pointer;
+            transition: 0.4s;
+            margin-top: 30px;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--neon-green); 
+            color: #000; 
+            box-shadow: 0 0 40px rgba(0, 255, 204, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .error, .success {
+            margin-top: 25px; 
+            padding: 20px; 
+            font-size: 13px; 
+            text-transform: uppercase; 
+            letter-spacing: 2px; 
+            text-align: center;
+            display: none;
+        }
+        .error { border: 1px solid #ff4b4b; color: #ff4b4b; background: rgba(255, 75, 75, 0.1); }
+        .success { border: 1px solid var(--neon-green); color: var(--neon-green); background: rgba(0, 255, 204, 0.1); }
+
+        .info-text {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            letter-spacing: 1px;
+            margin-top: 10px;
+            line-height: 1.6;
+        }
+
+        .team-member-input {
+            margin-bottom: 15px;
+        }
+
+        .team-member-input input {
+            margin-bottom: 0;
+        }
+
+        .team-member-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 8px;
+            display: block;
+            letter-spacing: 1px;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                max-width: 100%;
+                margin: 20px auto;
+            }
+
+            .card {
+                padding: 30px 20px;
+            }
+
+            header {
+                padding: 25px 15px;
+                margin: -10px -10px 20px -10px;
+            }
+
+            .header-title {
+                font-size: clamp(28px, 10vw, 40px);
+                letter-spacing: 4px;
+            }
+
+            .header-subtitle {
+                font-size: 9px;
+                letter-spacing: 3px;
+            }
+
+            input, select {
+                padding: 16px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+
+            button {
+                padding: 18px;
+                font-size: 11px;
+            }
+
+            .form-group label {
+                font-size: 9px;
+                letter-spacing: 3px;
+            }
+
+            .team-member-input {
+                margin-bottom: 12px;
+            }
+
+            .team-member-label {
+                font-size: 10px;
+            }
+
+            /* Ensure team members container is visible and scrollable */
+            #teamMembersContainer {
+                max-height: none;
+                overflow: visible;
+            }
+
+            /* Make sure hidden elements can become visible */
+            #teamLeaderGroup[style*="display: none"],
+            #teamMembersGroup[style*="display: none"] {
+                display: none !important;
+            }
+
+            #teamLeaderGroup:not([style*="display: none"]),
+            #teamMembersGroup:not([style*="display: none"]) {
+                display: block !important;
+            }
+        }
+
+        /* Ensure team members section is always accessible when visible */
+        #teamMembersGroup {
+            margin-top: 20px;
+        }
+
+        #teamMembersContainer {
+            margin-top: 15px;
+        }
+
+        /* College Search Styles */
+        .college-search-container {
+            position: relative;
+        }
+
+        #collegeSearch {
+            width: 100%;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-family: 'Raleway', sans-serif;
+            letter-spacing: 2px;
+            font-size: 16px;
+            transition: 0.4s;
+            margin-bottom: 0;
+        }
+
+        #collegeSearch:focus {
+            outline: none; 
+            border-color: var(--neon-purple); 
+            background: rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 20px var(--border-glow);
+        }
+
+        .college-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-top: none;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .college-dropdown-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-family: 'Raleway', sans-serif;
+            letter-spacing: 1px;
+            font-size: 14px;
+        }
+
+        .college-dropdown-item:hover {
+            background: rgba(186, 104, 255, 0.2);
+        }
+
+        .college-dropdown-item.selected {
+            background: rgba(0, 255, 204, 0.2);
+            color: var(--neon-green);
+        }
+
+        .college-dropdown-item.no-results {
+            color: rgba(255, 255, 255, 0.5);
+            cursor: default;
+            font-style: italic;
+        }
+
+        .college-dropdown-item.no-results:hover {
+            background: transparent;
+        }
+
+        /* Scrollbar styles for dropdown */
+        .college-dropdown::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .college-dropdown::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .college-dropdown::-webkit-scrollbar-thumb {
+            background: rgba(186, 104, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        .college-dropdown::-webkit-scrollbar-thumb:hover {
+            background: rgba(186, 104, 255, 0.5);
+        }
+
+        /* Floating Back Button */
+        .floating-back-btn {
+            position: fixed;
+            top: 5px;
+            left: 15px;
+            width: 40px;
+            height: 40px;
+            background: #6c757d;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .floating-back-btn:hover {
+            background: #545b62;
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+    </style>
+</head>
+<a href="/login" class="floating-back-btn">←</a>
+
+<body>
+
+<div class="stars-container" id="stars"></div>
+
+<header>
+    <h1 class="header-title">Carnivalesque</h1>
+    <div class="header-subtitle">Spot Registration Portal</div>
+</header>
+
+<div class="container">
+    <div class="card">
+        <form id="spotRegForm" onsubmit="submitRegistration(event)">
+            <div class="form-group">
+                <label for="event">Event *</label>
+                <select id="event" name="event" required autocomplete="off">
+                    <option value="">-- Select Event --</option>
+                </select>
+                <div class="info-text" id="eventInfo" style="display: none; color: var(--neon-green);">
+                    Event selected. Team member fields will appear below.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="college">College Name *</label>
+                <div class="college-search-container">
+                    <input type="text" id="collegeSearch" placeholder="Search for your college..." autocomplete="off" required>
+                    <select id="college" name="college" style="display: none;">
+                        <option value="">-- Select College --</option>
+                    </select>
+                    <div id="collegeDropdown" class="college-dropdown" style="display: none;"></div>
+                </div>
+                <input type="text" id="collegeOther" name="collegeOther" placeholder="Enter College Name" style="display: none; margin-top: 10px;">
+            </div>
+
+            <div class="form-group">
+                <label for="contact">Contact Number *</label>
+                <input type="tel" id="contact" name="contact" placeholder="Enter Contact Number" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address *</label>
+                <input type="email" id="email" name="email" placeholder="Enter Email Address" required>
+            </div>
+
+            <div class="form-group">
+                <label for="reg_no">Registration Number *</label>
+                <input type="text" id="reg_no" name="reg_no" placeholder="C26____" value="C26" required style="font-family: 'Courier New', monospace; letter-spacing: 2px;">
+                <div class="info-text">Registration number format: C26 + 4 digits (C26 is fixed, enter last 4 digits)</div>
+            </div>
+
+            <div class="form-group" id="teamLeaderGroup" style="display: none;">
+                <label for="team_leader">Team Leader Name *</label>
+                <input type="text" id="team_leader" name="team_leader" placeholder="Enter Team Leader Name">
+            </div>
+
+            <div class="form-group" id="teamMembersGroup" style="display: none;">
+                <label id="teamMembersLabel">Team Members *</label>
+                <div id="teamMembersContainer" style="min-height: 50px;">
+                    <div style="padding: 20px; text-align: center; color: rgba(255,255,255,0.4); font-size: 12px;">
+                        Please select an event above to see team member fields
+                    </div>
+                </div>
+                <div class="info-text" id="teamSizeInfo"></div>
+            </div>
+
+            <button type="submit" id="submitBtn">Submit Registration</button>
+
+            <div class="error" id="error"></div>
+            <div class="success" id="success"></div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Starfield Generator
+    const starsContainer = document.getElementById('stars');
+    for (let i = 0; i < 100; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        const size = Math.random() * 2 + 'px';
+        star.style.width = size; 
+        star.style.height = size;
+        star.style.top = Math.random() * 100 + '%';
+        star.style.left = Math.random() * 100 + '%';
+        star.style.setProperty('--duration', Math.random() * 3 + 2 + 's');
+        starsContainer.appendChild(star);
+    }
+
+    let currentEventRequirements = null;
+    let allColleges = [];
+
+    // Load events on page load
+    fetch("/get_events")
+        .then(res => res.json())
+        .then(events => {
+            const select = document.getElementById("event");
+            console.log("Loading events:", events);
+            
+            // Clear existing options except the first one
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
+            
+            events.forEach(event => {
+                const option = document.createElement("option");
+                option.value = event;
+                option.textContent = event;
+                select.appendChild(option);
+            });
+            
+            console.log("Events loaded. Total options:", select.options.length);
+            
+            // Add event change listener (works for both desktop and mobile)
+            select.addEventListener('change', function() {
+                const selectedValue = this.value;
+                console.log("Event changed to:", selectedValue);
+                const eventInfo = document.getElementById("eventInfo");
+                
+                if (selectedValue && selectedValue !== "" && selectedValue !== "-- Select Event --") {
+                    eventInfo.style.display = "block";
+                    this.style.borderColor = "var(--neon-green)";
+                    
+                    // IMMEDIATELY show team members section
+                    const teamMembersGroup = document.getElementById("teamMembersGroup");
+                    teamMembersGroup.style.display = "block";
+                    teamMembersGroup.style.visibility = "visible";
+                    
+                    // Load requirements which will populate the fields
+                    loadEventRequirements(selectedValue);
+                } else {
+                    eventInfo.style.display = "none";
+                    this.style.borderColor = "";
+                    document.getElementById("teamMembersGroup").style.display = "none";
+                }
+            });
+            
+            // Also listen for input event (for mobile browsers)
+            select.addEventListener('input', function() {
+                console.log("Event input to:", this.value);
+                loadEventRequirements(this.value);
+            });
+            
+            // Touch event for mobile (some mobile browsers need this)
+            let touchTimeout;
+            select.addEventListener('touchstart', function() {
+                clearTimeout(touchTimeout);
+                touchTimeout = setTimeout(() => {
+                    console.log("Touch event - current value:", this.value);
+                    if (this.value) {
+                        loadEventRequirements(this.value);
+                    }
+                }, 500);
+            });
+            
+            // Also check on blur (when user closes dropdown)
+            select.addEventListener('blur', function() {
+                console.log("Select blurred - value:", this.value);
+                if (this.value) {
+                    loadEventRequirements(this.value);
+                }
+            });
+        })
+        .catch(err => {
+            console.error("Error loading events:", err);
+            document.getElementById("error").textContent = "Failed to load events. Please refresh the page.";
+            document.getElementById("error").style.display = "block";
+        });
+
+    // Load colleges on page load
+    fetch("/get_colleges")
+        .then(res => res.json())
+        .then(colleges => {
+            console.log("Loading colleges:", colleges);
+            allColleges = colleges;
+            
+            // Setup college search functionality
+            setupCollegeSearch();
+        }).catch(err => {
+            console.error("Failed to load colleges:", err);
+            document.getElementById("collegeSearch").placeholder = "Error loading colleges";
+        });
+
+    function setupCollegeSearch() {
+        const searchInput = document.getElementById("collegeSearch");
+        const dropdown = document.getElementById("collegeDropdown");
+        const hiddenSelect = document.getElementById("college");
+        const collegeOtherInput = document.getElementById("collegeOther");
+
+        // Handle search input
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            
+            if (searchTerm.length === 0) {
+                dropdown.style.display = 'none';
+                hiddenSelect.value = '';
+                return;
+            }
+
+            const filteredColleges = allColleges.filter(college => 
+                college.toLowerCase().includes(searchTerm)
+            );
+
+            displayCollegeDropdown(filteredColleges, searchTerm);
+        });
+
+        // Handle focus/blur events
+        searchInput.addEventListener('focus', function() {
+            if (this.value.trim().length > 0) {
+                const searchTerm = this.value.toLowerCase().trim();
+                const filteredColleges = allColleges.filter(college => 
+                    college.toLowerCase().includes(searchTerm)
+                );
+                displayCollegeDropdown(filteredColleges, searchTerm);
+            }
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.college-search-container')) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        // Handle keyboard navigation
+        searchInput.addEventListener('keydown', function(event) {
+            const items = dropdown.querySelectorAll('.college-dropdown-item:not(.no-results)');
+            let selectedIndex = -1;
+
+            // Find currently selected item
+            items.forEach((item, index) => {
+                if (item.classList.contains('selected')) {
+                    selectedIndex = index;
+                }
+            });
+
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                updateSelection(items, selectedIndex);
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, 0);
+                updateSelection(items, selectedIndex);
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                if (selectedIndex >= 0 && items[selectedIndex]) {
+                    selectCollege(items[selectedIndex].textContent);
+                }
+            } else if (event.key === 'Escape') {
+                dropdown.style.display = 'none';
+            }
+        });
+    }
+
+    function displayCollegeDropdown(colleges, searchTerm) {
+        const dropdown = document.getElementById("collegeDropdown");
+        dropdown.innerHTML = '';
+
+        if (colleges.length === 0) {
+            const noResults = document.createElement('div');
+            noResults.className = 'college-dropdown-item no-results';
+            noResults.textContent = 'No colleges found. Type to search or select "Others" below.';
+            dropdown.appendChild(noResults);
+        } else {
+            colleges.forEach(college => {
+                const item = document.createElement('div');
+                item.className = 'college-dropdown-item';
+                item.textContent = college;
+                
+                // Highlight matching text
+                if (searchTerm) {
+                    const regex = new RegExp(`(${searchTerm})`, 'gi');
+                    item.innerHTML = college.replace(regex, '<strong>$1</strong>');
+                }
+                
+                item.addEventListener('click', function() {
+                    selectCollege(college);
+                });
+                
+                dropdown.appendChild(item);
+            });
+        }
+
+        // Always add "Others" option at the end
+        const othersItem = document.createElement('div');
+        othersItem.className = 'college-dropdown-item';
+        othersItem.textContent = 'Others (Not in list)';
+        othersItem.addEventListener('click', function() {
+            selectCollege('Others (Not in list)');
+        });
+        dropdown.appendChild(othersItem);
+
+        dropdown.style.display = 'block';
+    }
+
+    function updateSelection(items, selectedIndex) {
+        items.forEach((item, index) => {
+            item.classList.toggle('selected', index === selectedIndex);
+        });
+    }
+
+    function selectCollege(collegeName) {
+        const searchInput = document.getElementById("collegeSearch");
+        const hiddenSelect = document.getElementById("college");
+        const dropdown = document.getElementById("collegeDropdown");
+        const collegeOtherInput = document.getElementById("collegeOther");
+
+        searchInput.value = collegeName;
+        hiddenSelect.value = collegeName;
+        dropdown.style.display = 'none';
+
+        // Handle "Others" option
+        if (collegeName === 'Others' || collegeName === 'Others (Not in list)') {
+            collegeOtherInput.style.display = 'block';
+            collegeOtherInput.required = true;
+            collegeOtherInput.focus();
+            // Set the hidden select value to 'Others' for backend processing
+            hiddenSelect.value = 'Others';
+        } else {
+            collegeOtherInput.style.display = 'none';
+            collegeOtherInput.required = false;
+            collegeOtherInput.value = '';
+            // Set the hidden select value to the actual college name
+            hiddenSelect.value = collegeName;
+        }
+    }
+
+    function loadEventRequirements(eventName) {
+        console.log("Loading requirements for event:", eventName);
+        
+        if (!eventName) {
+            document.getElementById("teamLeaderGroup").style.display = "none";
+            document.getElementById("teamMembersGroup").style.display = "none";
+            return;
+        }
+
+        // ALWAYS show team members section when event is selected
+        const teamMembersGroup = document.getElementById("teamMembersGroup");
+        teamMembersGroup.style.display = "block";
+        teamMembersGroup.style.visibility = "visible";
+        
+        // Show loading state
+        document.getElementById("teamMembersContainer").innerHTML = "<div style='padding: 20px; text-align: center; color: rgba(255,255,255,0.5);'>Loading team requirements...</div>";
+
+        fetch(`/get_event_requirements?event=${encodeURIComponent(eventName)}`)
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    console.error("Error loading requirements:", data.error);
+                    // Even on error, show default fields
+                    currentEventRequirements = {min: 1, max: 20};
+                    updateTeamFields(1, 20);
+                    return;
+                }
+
+                console.log("Requirements loaded:", data);
+                console.log("Min:", data.min, "Max:", data.max);
+                currentEventRequirements = data;
+                
+                // Ensure we have valid min/max - always show fields
+                const min = data.min || 1;
+                const max = data.max || 20;
+                
+                updateTeamFields(min, max);
+            })
+            .catch(err => {
+                console.error("Error loading requirements:", err);
+                console.log("Using default requirements - showing fields anyway");
+                // Default to 1-20 if error - BUT STILL SHOW FIELDS
+                currentEventRequirements = {min: 1, max: 20};
+                updateTeamFields(1, 20);
+            });
+    }
+
+    function updateTeamFields(min, max) {
+        console.log(`updateTeamFields called with min=${min}, max=${max}`);
+        
+        const teamLeaderGroup = document.getElementById("teamLeaderGroup");
+        const teamMembersGroup = document.getElementById("teamMembersGroup");
+        const teamMembersContainer = document.getElementById("teamMembersContainer");
+        const teamSizeInfo = document.getElementById("teamSizeInfo");
+        const teamMembersLabel = document.getElementById("teamMembersLabel");
+
+        // Show team leader for team events (max > 1)
+        if (max > 1) {
+            teamLeaderGroup.style.display = "block";
+            teamLeaderGroup.style.visibility = "visible";
+            teamLeaderGroup.setAttribute('data-visible', 'true');
+            document.getElementById("team_leader").required = true;
+        } else {
+            // For solo events, hide team leader (will use first member as leader)
+            teamLeaderGroup.style.display = "none";
+            teamLeaderGroup.setAttribute('data-visible', 'false');
+            document.getElementById("team_leader").required = false;
+        }
+
+        // ALWAYS show team members section - FORCE IT
+        teamMembersGroup.style.display = "block";
+        teamMembersGroup.style.visibility = "visible";
+        teamMembersGroup.style.opacity = "1";
+        teamMembersGroup.setAttribute('data-visible', 'true');
+        
+        // Remove any inline styles that might hide it
+        teamMembersGroup.removeAttribute('style');
+        teamMembersGroup.style.cssText = "display: block !important; visibility: visible !important; opacity: 1 !important;";
+        
+        if (max === 1) {
+            teamMembersLabel.textContent = `Participant Name *`;
+            teamSizeInfo.textContent = `This is a solo event. Enter your name.`;
+        } else {
+            teamMembersLabel.textContent = `Team Members (${min}-${max} members) *`;
+            teamSizeInfo.textContent = `This event requires ${min} to ${max} team member${max > 1 ? 's' : ''}.`;
+        }
+        
+        console.log("Team members group display:", teamMembersGroup.style.display);
+        console.log("Team members group visibility:", window.getComputedStyle(teamMembersGroup).display);
+
+        // Clear existing inputs
+        teamMembersContainer.innerHTML = "";
+        console.log(`Creating ${max} team member fields (min: ${min})`);
+
+        // Create input fields for max number of members
+        for (let i = 1; i <= max; i++) {
+            const memberDiv = document.createElement("div");
+            memberDiv.className = "team-member-input";
+            memberDiv.style.display = "block";
+            memberDiv.style.marginBottom = "15px";
+            
+            const label = document.createElement("label");
+            label.className = "team-member-label";
+            label.style.display = "block";
+            if (max === 1) {
+                label.textContent = `Participant Name *`;
+            } else if (i === 1) {
+                label.textContent = `Member ${i} *`;
+            } else if (i <= min) {
+                label.textContent = `Member ${i} *`;
+            } else {
+                label.textContent = `Member ${i} (Optional)`;
+            }
+            
+            const input = document.createElement("input");
+            input.type = "text";
+            input.name = `team_member_${i}`;
+            input.id = `team_member_${i}`;
+            input.setAttribute('autocomplete', 'name');
+            input.className = "form-input"; // Use same class as other inputs
+            if (max === 1) {
+                input.placeholder = `Enter Your Name`;
+            } else {
+                input.placeholder = `Enter Member ${i} Name`;
+            }
+            if (i <= min) {
+                input.required = true;
+            }
+            
+            // Ensure inputs are visible and accessible on mobile
+            input.style.display = "block";
+            input.style.width = "100%";
+            input.style.opacity = "1";
+            input.style.visibility = "visible";
+            input.style.padding = "20px";
+            input.style.background = "rgba(0, 0, 0, 0.4)";
+            input.style.border = "1px solid rgba(255, 255, 255, 0.1)";
+            input.style.color = "#fff";
+            input.style.fontSize = "16px";
+
+            memberDiv.appendChild(label);
+            memberDiv.appendChild(input);
+            teamMembersContainer.appendChild(memberDiv);
+            
+            console.log(`Created team member field ${i}`);
+        }
+        
+        console.log(`Total team member fields created: ${teamMembersContainer.children.length}`);
+        
+        // Scroll to team members section on mobile after a short delay
+        setTimeout(() => {
+            if (window.innerWidth <= 768) {
+                teamMembersGroup.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }, 300);
+        
+        // Force reflow to ensure visibility
+        teamMembersContainer.offsetHeight;
+    }
+
+    function submitRegistration(event) {
+        event.preventDefault();
+        console.log("=== SUBMIT REGISTRATION CALLED ===");
+        
+        const errorDiv = document.getElementById("error");
+        const successDiv = document.getElementById("success");
+        const submitBtn = document.getElementById("submitBtn");
+        
+        errorDiv.style.display = "none";
+        successDiv.style.display = "none";
+        
+        console.log("Submit button clicked, disabled:", submitBtn.disabled);
+
+        // Get event value - check both value and selectedIndex
+        const eventSelect = document.getElementById("event");
+        let eventValue = eventSelect.value ? eventSelect.value.trim() : "";
+        
+        // If value is empty, try to get from selected option
+        if (!eventValue && eventSelect.selectedIndex > 0) {
+            eventValue = eventSelect.options[eventSelect.selectedIndex].value.trim();
+        }
+        
+        console.log("Event select value:", eventValue);
+        console.log("Event select selectedIndex:", eventSelect.selectedIndex);
+        console.log("Event select options:", Array.from(eventSelect.options).map(o => o.value));
+
+        // Get team leader (might be hidden for solo events)
+        let teamLeaderValue = "";
+        const teamLeaderInput = document.getElementById("team_leader");
+        if (teamLeaderInput && teamLeaderInput.offsetParent !== null) {
+            teamLeaderValue = teamLeaderInput.value.trim();
+        }
+
+        // Debug: Check all field values
+        const collegeHidden = document.getElementById("college").value.trim();
+        const collegeSearch = document.getElementById("collegeSearch").value.trim();
+        const collegeOther = document.getElementById("collegeOther").value.trim();
+        
+        console.log("DEBUG VALUES:");
+        console.log("Event:", eventValue);
+        console.log("College (hidden):", collegeHidden);
+        console.log("College (search):", collegeSearch);
+        console.log("College (other):", collegeOther);
+        console.log("Contact:", document.getElementById("contact").value.trim());
+        console.log("Email:", document.getElementById("email").value.trim());
+        console.log("Reg No:", document.getElementById("reg_no").value.trim());
+
+        const formData = {
+            event: eventValue,
+            college: collegeHidden || collegeSearch,
+            college_other: collegeOther,
+            contact: document.getElementById("contact").value.trim(),
+            email: document.getElementById("email").value.trim(),
+            reg_no: document.getElementById("reg_no").value.trim(),
+            team_leader: teamLeaderValue,
+            team_members: []
+        };
+        
+        console.log("FORM DATA TO SUBMIT:", formData);
+
+        // Handle "Others" college option - keep both college and college_other for backend processing
+        if (formData.college === "Others" || formData.college === "Others (Not in list)") {
+            if (!formData.college_other) {
+                errorDiv.textContent = "Please enter your college name";
+                errorDiv.style.display = "block";
+                document.getElementById("collegeOther").focus();
+                document.getElementById("collegeOther").style.borderColor = "#ff4b4b";
+                return;
+            }
+            // Keep formData.college as "Others" and formData.college_other as the entered name
+            // Backend will handle the mapping correctly
+        }
+
+        // Collect team members
+        const teamMemberInputs = document.querySelectorAll('[id^="team_member_"]');
+        teamMemberInputs.forEach(input => {
+            const value = input.value.trim();
+            if (value) {
+                formData.team_members.push(value);
+            }
+        });
+
+        // Validation with better error messages
+        if (!formData.event) {
+            errorDiv.textContent = "Please select an event from the dropdown";
+            errorDiv.style.display = "block";
+            eventSelect.focus();
+            eventSelect.style.borderColor = "#ff4b4b";
+            return;
+        }
+        
+        if (!formData.college || !formData.contact || !formData.email || !formData.reg_no) {
+            console.log("VALIDATION FAILED: Basic fields missing");
+            console.log("College:", formData.college);
+            console.log("Contact:", formData.contact);
+            console.log("Email:", formData.email);
+            console.log("Reg No:", formData.reg_no);
+            errorDiv.textContent = "All basic fields are required";
+            errorDiv.style.display = "block";
+            return;
+        }
+        
+        // Validate registration number format (should be C26 + 4 digits)
+        const regNoInput = document.getElementById("reg_no").value.trim();
+        if (!/^C26\d{4}$/.test(regNoInput)) {
+            console.log("VALIDATION FAILED: Registration number must be C26 + 4 digits");
+            errorDiv.textContent = "Registration number must be C26 followed by 4 digits (e.g., C261234)";
+            errorDiv.style.display = "block";
+            document.getElementById("reg_no").focus();
+            return;
+        }
+        
+        // Reset border color if event is selected
+        eventSelect.style.borderColor = "";
+
+        // Validate team size
+        if (currentEventRequirements) {
+            const min = currentEventRequirements.min;
+            const max = currentEventRequirements.max;
+            const teamSize = formData.team_members.length;
+
+            if (teamSize < min) {
+                console.log("VALIDATION FAILED: Not enough team members");
+                console.log(`Required: ${min}, Have: ${teamSize}`);
+                errorDiv.textContent = `This event requires at least ${min} team member${min > 1 ? 's' : ''}. You have entered ${teamSize}.`;
+                errorDiv.style.display = "block";
+                return;
+            }
+
+            if (teamSize > max) {
+                console.log("VALIDATION FAILED: Too many team members");
+                console.log(`Max allowed: ${max}, Have: ${teamSize}`);
+                errorDiv.textContent = `This event allows maximum ${max} team member${max > 1 ? 's' : ''}. You have entered ${teamSize}.`;
+                errorDiv.style.display = "block";
+                return;
+            }
+
+            // If team leader is separate and team size > 1, validate it
+            if (max > 1 && !formData.team_leader) {
+                console.log("VALIDATION FAILED: Team leader required for team event");
+                errorDiv.textContent = "Team leader name is required for team events";
+                errorDiv.style.display = "block";
+                return;
+            }
+        } else {
+            // If no requirements loaded, at least check we have some team members
+            if (formData.team_members.length === 0) {
+                errorDiv.textContent = "Please enter at least one team member";
+                errorDiv.style.display = "block";
+                return;
+            }
+        }
+
+        // Double-check event value before submitting
+        console.log("Submitting form data:", formData);
+        console.log("Event value check:", {
+            value: eventSelect.value,
+            selectedIndex: eventSelect.selectedIndex,
+            selectedText: eventSelect.options[eventSelect.selectedIndex]?.text,
+            formDataEvent: formData.event
+        });
+        
+        if (!formData.event || formData.event === "" || formData.event === "Select Event" || formData.event === "-- Select Event --") {
+            console.log("VALIDATION FAILED: Event not selected");
+            console.log("Event value:", formData.event);
+            errorDiv.textContent = "Please select an event from the dropdown before submitting";
+            errorDiv.style.display = "block";
+            eventSelect.focus();
+            eventSelect.style.borderColor = "#ff4b4b";
+            return;
+        }
+
+        console.log("ABOUT TO SUBMIT - All validations passed!");
+        submitBtn.disabled = true;
+        submitBtn.textContent = "SUBMITTING...";
+
+        fetch("/submit_spot_registration", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                errorDiv.textContent = data.error;
+                errorDiv.style.display = "block";
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Submit Registration";
+            } else {
+                successDiv.textContent = data.message || "Registration successful! Your data has been added.";
+                successDiv.style.display = "block";
+                
+                // Reset form
+                document.getElementById("spotRegForm").reset();
+                
+                // Reset button after delay
+                setTimeout(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Submit Registration";
+                }, 2000);
+            }
+        })
+        .catch(err => {
+            console.error("Error:", err);
+            console.error("Full error details:", err);
+            errorDiv.textContent = "Registration failed. Please try again.";
+            errorDiv.style.display = "block";
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Submit Registration";
+        });
+    }
+
+    // Registration number input formatting
+    document.addEventListener('DOMContentLoaded', function() {
+        const regNoInput = document.getElementById("reg_no");
+        
+        if (regNoInput) {
+            // Set cursor position after "C26" when focused
+            regNoInput.addEventListener('focus', function() {
+                if (this.value.length === 3) { // Just "C26"
+                    this.setSelectionRange(3, 3); // Position after "C26"
+                }
+            });
+            
+            // Handle input to protect "C26" prefix
+            regNoInput.addEventListener('input', function(e) {
+                let value = this.value;
+                
+                // Ensure it starts with "C26"
+                if (!value.startsWith('C26')) {
+                    value = 'C26' + value.replace(/^C26/, '');
+                }
+                
+                // Only allow numbers after "C26"
+                const afterPrefix = value.substring(3);
+                const numericOnly = afterPrefix.replace(/[^0-9]/g, '');
+                
+                // Limit to 4 digits after "C26"
+                const limitedDigits = numericOnly.slice(0, 4);
+                
+                // Reconstruct the value
+                this.value = 'C26' + limitedDigits;
+                
+                // Move cursor to end if user is typing
+                if (this.selectionStart < 3) {
+                    this.setSelectionRange(this.value.length, this.value.length);
+                }
+            });
+            
+            // Handle keypress to prevent deletion of "C26"
+            regNoInput.addEventListener('keydown', function(e) {
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                
+                // Prevent backspace/delete on "C26" part
+                if ((e.key === 'Backspace' && start <= 3 && end <= 3) ||
+                    (e.key === 'Delete' && start < 3)) {
+                    e.preventDefault();
+                    return;
+                }
+            });
+            
+            // Prevent paste of invalid content
+            regNoInput.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pastedData = (e.clipboardData || window.clipboardData).getData('text');
+                
+                // Extract only numbers from paste
+                const numericOnly = pastedData.replace(/[^0-9]/g, '');
+                
+                // Get current value after "C26"
+                const currentAfterPrefix = this.value.substring(3);
+                
+                // Combine and limit to 4 digits
+                const newDigits = (currentAfterPrefix + numericOnly).slice(0, 4);
+                
+                // Update value
+                this.value = 'C26' + newDigits;
+                
+                // Move cursor to end
+                this.setSelectionRange(this.value.length, this.value.length);
+            });
+        }
+    });
+</script>
+
+</body>
+</html>

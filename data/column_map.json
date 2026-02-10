@@ -1,0 +1,28 @@
+{
+    "reg_no": "Registration No",
+    "event": "24Feb Events",
+    "college": "College Name",
+    "specify_college": "Specify College Name",
+    "team_leader": "Participant-1",
+    "contact": "Contact Phone",
+    "email": "Email",
+    "team_members": [
+        "Participant-1",
+        "Participant-2",
+        "Participant-3",
+        "Participant-4",
+        "Participant-5",
+        "Participant-6",
+        "Participant-7",
+        "Participant-8",
+        "Participant-9",
+        "Participant-10",
+        "Participant-11",
+        "Participant-12",
+        "Name of Team Leader",
+        "Student 2",
+        "Student 3",
+        "Student 4",
+        "Student 5"
+    ]
+}

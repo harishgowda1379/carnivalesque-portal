@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carnivalesque 26 - Certificate Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Raleway:wght@200;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-purple: #11db62;
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --border-glow: rgba(186, 104, 255, 0.3);
+            --core-flare: rgba(186, 104, 255, 0.25);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Raleway', sans-serif;
+            background-color: #050505;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.8)), 
+                              url('/static/images/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 400px;
+            background: radial-gradient(circle, var(--core-flare) 0%, transparent 70%);
+            filter: blur(60px);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .stars-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        .star { position: absolute; background: white; border-radius: 50%; opacity: 0.5; animation: twinkle var(--duration) infinite ease-in-out; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(1); } 50% { opacity: 1; transform: scale(1.4); } }
+
+        /* Navigation Header Overlay */
+        .nav-header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+        }
+
+        .back-link {
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: none;
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        .back-link:hover {
+            color: var(--neon-purple);
+            border-color: var(--neon-purple);
+            box-shadow: 0 0 15px var(--border-glow);
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 90%;
+            max-width: 1100px;
+            margin: 100px auto 50px;
+            padding: 40px 20px;
+            box-shadow: 0 0 100px rgba(0, 0, 0, 0.7);
+        }
+
+        h2 { 
+    font-family: 'Foxgrab', sans-serif;
+    text-transform: uppercase;
+    text-align: center;
+
+    /* RESPONSIVE SIZE */
+    font-size: clamp(22px, 7vw, 36px);
+
+    /* MOBILE FRIENDLY SPACING */
+    letter-spacing: clamp(3px, 1.5vw, 10px);
+
+    margin-bottom: 12px;
+
+    /* PLAIN WHITE */
+    color: #ffffff;
+
+    /* SOFT NEON GLOW */
+    text-shadow:
+        0 0 10px rgba(255, 255, 255, 0.5),
+        0 0 25px rgba(17, 219, 98, 0.5);
+}
+
+
+       .subtitle { 
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+
+    font-size: clamp(9px, 3vw, 11px);
+    letter-spacing: clamp(2px, 1.5vw, 4px);
+
+    margin-bottom: 30px;
+    text-transform: uppercase;
+}
+
+
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .event-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            cursor: pointer;
+            transition: 0.5s;
+            text-transform: uppercase;
+        }
+
+        .event-card:hover { 
+            border-color: var(--neon-purple); 
+            background: rgba(186, 104, 255, 0.05); 
+            transform: translateY(-5px);
+        }
+
+        .event-card.active { border-color: var(--neon-purple); background: rgba(186, 104, 255, 0.1); }
+        
+        .event-name { 
+            font-family: 'Syncopate', sans-serif; 
+            font-size: 11px; 
+            letter-spacing: 2px; 
+            color: var(--neon-purple); 
+        }
+
+        .winners-box {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+            margin-top: 0;
+        }
+
+        .event-card.active .winners-box { 
+            max-height: 1000px; 
+            margin-top: 20px; 
+            border-top: 1px solid rgba(255,255,255,0.1); 
+            padding-top: 15px; 
+        }
+
+        .winner-entry { margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.2); }
+        .rank { font-size: 8px; letter-spacing: 2px; color: rgba(255,255,255,0.5); margin-bottom: 5px; }
+        
+        .details-link { 
+            font-size: 10px; 
+            letter-spacing: 1px; 
+            color: #fff; 
+            text-decoration: underline; 
+            cursor: pointer; 
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+        /* Modal Mobile Tuning */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: #050505;
+            border: 1px solid var(--neon-purple);
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 0 40px var(--border-glow);
+        }
+
+        .modal-title { font-family: 'Syncopate', sans-serif; font-size: 12px; letter-spacing: 3px; color: var(--neon-purple); margin-bottom: 20px; text-align: center; }
+        .detail-label { font-size: 8px; color: rgba(255,255,255,0.4); letter-spacing: 2px; text-transform: uppercase; margin-top: 15px; }
+        .detail-value { font-size: 12px; color: #fff; letter-spacing: 1px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; word-break: break-all; }
+        
+        .close-btn { 
+            width: 100%; padding: 12px; background: transparent; border: 1px solid var(--neon-purple); 
+            color: var(--neon-purple); text-transform: uppercase; letter-spacing: 2px; cursor: pointer; margin-top: 20px;
+            font-size: 11px;
+        }
+
+        /* Mobile Specific Media Query */
+        @media (max-width: 600px) {
+            .container { margin-top: 80px; padding: 30px 15px; width: 95%; }
+            .nav-header { top: 15px; left: 15px; }
+            .event-card { padding: 20px; }
+            .events-grid { grid-template-columns: 1fr; }
+        }
+        @font-face {
+    font-family: 'Foxgrab';
+    src: url('/static/fonts/Foxgrab.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+    </style>
+</head>
+<a href="/login" class="floating-back-btn">←</a>
+
+<body>
+
+    <div class="stars-container" id="stars"></div>
+
+    <div class="container">
+        <h2>Carnivalesque 26</h2>
+        <p class="subtitle">Completed Events Archive</p>
+
+        <div id="eventsContainer">
+            <p style="text-align: center; letter-spacing: 3px; color: var(--neon-purple); font-size: 10px;">INITIALIZING LINK...</p>
+        </div>
+    </div>
+
+    <div id="modal" class="modal-overlay" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-title">Team Details</div>
+            <div class="detail-label">Identifier</div>
+            <div id="m-reg" class="detail-value"></div>
+            <div class="detail-label">College</div>
+            <div id="m-college" class="detail-value"></div>
+            <div class="detail-label">Rank</div>
+            <div id="m-rank" class="detail-value"></div>
+            <div class="detail-label">Team Members</div>
+            <div id="m-team" class="detail-value"></div>
+            <button class="close-btn" onclick="closeModal()">Close Record</button>
+        </div>
+    </div>
+
+    <script>
+        const starsContainer = document.getElementById('stars');
+        for (let i = 0; i < 50; i++) { // Reduced count for mobile performance
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 2 + 'px';
+            star.style.width = size; star.style.height = size;
+            star.style.top = Math.random() * 100 + '%';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.setProperty('--duration', Math.random() * 3 + 2 + 's');
+            starsContainer.appendChild(star);
+        }
+
+        function openModal(reg, rank, team, college) {
+            document.getElementById('m-reg').innerText = reg;
+            document.getElementById('m-college').innerText = college || "Not Available";
+            document.getElementById('m-rank').innerText = rank;
+            document.getElementById('m-team').innerText = team;
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+        async function updateRecords() {
+            try {
+                const response = await fetch("/completed_events");
+                const data = await response.json();
+                const container = document.getElementById("eventsContainer");
+                container.innerHTML = "";
+
+                const eventGroups = {};
+                Object.keys(data).forEach(id => {
+                    const info = data[id];
+                    if(!eventGroups[info.event]) eventGroups[info.event] = [];
+                    eventGroups[info.event].push({ id, ...info });
+                });
+
+                const grid = document.createElement("div");
+                grid.className = "events-grid";
+
+                Object.keys(eventGroups).forEach(name => {
+                    const card = document.createElement("div");
+                    card.className = "event-card";
+                    card.onclick = function() {
+                        const active = this.classList.contains('active');
+                        document.querySelectorAll('.event-card').forEach(c => c.classList.remove('active'));
+                        if(!active) this.classList.add('active');
+                    };
+
+                    let winnersHtml = "";
+                    eventGroups[name].sort((a,b) => a.position - b.position).forEach(w => {
+                        const rankLabel = w.position == 1 ? "FIRST" : w.position == 2 ? "SECOND" : "THIRD";
+                        const teamList = w.team ? w.team.join(", ") : "N/A";
+                        const college = w.college ? w.college.replace(/'/g, "\\'") : "";
+                        winnersHtml += `
+                            <div class="winner-entry">
+                                <div class="rank">${rankLabel} PLACE</div>
+                                <div style="font-size: 11px; word-break: break-all;">ID: ${w.id}</div>
+                                <div class="details-link" onclick="event.stopPropagation(); openModal('${w.id}', '${rankLabel}', '${teamList}', '${college}')">
+                                    View Team Details
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    card.innerHTML = `
+                        <div class="event-name">${name}</div>
+                        <div class="winners-box">${winnersHtml}</div>
+                    `;
+                    grid.appendChild(card);
+                });
+                container.appendChild(grid);
+            } catch (err) { console.error("Fetch failed"); }
+        }
+
+        updateRecords();
+        setInterval(updateRecords, 30000);
+    </script>
+</body>
+</html>

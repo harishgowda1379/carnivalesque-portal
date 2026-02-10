@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carnivalesque 26 - Admin Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Raleway:wght@200;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-purple: #35da88;
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --border-glow: rgba(42, 224, 88, 0.3);
+            --core-flare: rgba(186, 104, 255, 0.25);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Raleway', sans-serif;
+            background-color: #050505;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.8)), 
+                              url('/static/images/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* The Original Bottom Glow (The "Core") - Matching Portal */
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 400px;
+            background: radial-gradient(circle, var(--core-flare) 0%, transparent 70%);
+            filter: blur(60px);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .stars-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        .star { position: absolute; background: white; border-radius: 50%; opacity: 0.5; animation: twinkle var(--duration) infinite ease-in-out; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(1); } 50% { opacity: 1; transform: scale(1.4); } }
+
+        header {
+            position: relative;
+            z-index: 100;
+            padding: 30px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .back-to-login-btn {
+            position: absolute;
+            left: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-family: 'Raleway', sans-serif;
+            font-size: 12px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .back-to-login-btn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.4);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding-left: 100px;
+                text-align: center;
+            }
+            .back-to-login-btn {
+                padding: 6px 12px;
+                font-size: 10px;
+                left: 10px;
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 95%;
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 60px 40px;
+            box-shadow: 0 0 100px rgba(0, 0, 0, 0.7);
+        }
+
+        h2 { 
+            font-family: 'Syncopate', sans-serif; 
+            text-transform: uppercase; 
+            letter-spacing: 10px; 
+            text-align: center; 
+            margin-bottom: 5px; 
+            font-size: 24px; 
+            text-shadow: 0 0 20px var(--neon-purple); 
+        }
+
+        .subtitle { 
+            text-align: center; 
+            color: rgba(255, 255, 255, 0.4); 
+            margin-bottom: 50px; 
+            font-size: 9px; 
+            text-transform: uppercase; 
+            letter-spacing: 5px; 
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 35px;
+            margin-bottom: 30px;
+        }
+
+        h3 {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 14px;
+            letter-spacing: 4px;
+            color: var(--neon-purple);
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+
+        /* Form Styling - Matching Portal Inputs */
+        .form-group { margin-bottom: 20px; }
+        label { 
+            display: block; 
+            font-size: 9px; 
+            text-transform: uppercase; 
+            letter-spacing: 2px; 
+            color: rgba(255,255,255,0.4); 
+            margin-bottom: 8px;
+        }
+
+        select {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-family: 'Raleway', sans-serif;
+            letter-spacing: 2px;
+            outline: none;
+            transition: 0.3s;
+        }
+        select:focus { border-color: var(--neon-purple); }
+
+        .checkbox-group {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            color: rgba(255,255,255,0.7);
+        }
+        .checkbox-label:hover { background: rgba(186, 104, 255, 0.1); color: #fff; }
+        input[type="checkbox"] { accent-color: var(--neon-purple); }
+
+        button {
+            width: 100%;
+            padding: 20px;
+            background: transparent;
+            border: 1px solid var(--neon-purple);
+            color: var(--neon-purple);
+            font-family: 'Raleway', sans-serif;
+            font-weight: 700;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.4s;
+            margin-top: 10px;
+        }
+        button:hover:not(:disabled) { background: var(--neon-purple); color: #000; box-shadow: 0 0 30px var(--border-glow); }
+        button:disabled { opacity: 0.3; }
+
+        #mapSuccess {
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid var(--neon-purple);
+            background: rgba(186, 104, 255, 0.1);
+            color: var(--neon-purple);
+            text-align: center;
+            font-size: 11px;
+            letter-spacing: 2px;
+            display: none;
+        }
+
+        #codesSuccess {
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid var(--neon-purple);
+            background: rgba(186, 104, 255, 0.1);
+            color: var(--neon-purple);
+            text-align: center;
+            font-size: 11px;
+            letter-spacing: 2px;
+            display: none;
+        }
+
+        #passwordSuccess {
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+            color: #00ff00;
+            text-align: center;
+            font-size: 11px;
+            letter-spacing: 2px;
+            display: none;
+        }
+
+        #passwordError {
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid #ff4b4b;
+            background: rgba(255, 75, 75, 0.1);
+            color: #ff4b4b;
+            text-align: center;
+            font-size: 11px;
+            letter-spacing: 2px;
+            display: none;
+        }
+
+        .event-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 25px;
+        }
+        .event-title { font-family: 'Syncopate', sans-serif; font-size: 12px; color: var(--neon-purple); margin-bottom: 15px; letter-spacing: 2px; }
+        
+        .status-badge {
+            display: inline-block;
+            font-size: 8px;
+            letter-spacing: 2px;
+            padding: 4px 10px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+        .not-started { border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.5); }
+        .started { border: 1px solid #f39c12; color: #f39c12; }
+        .locked { border: 1px solid #e74c3c; color: #e74c3c; }
+
+        .winners-section strong { font-size: 9px; letter-spacing: 1px; color: rgba(255,255,255,0.4); display: block; margin-bottom: 10px; text-transform: uppercase; }
+        .winner-item { font-size: 12px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.03); color: #ddd; }
+
+        .loading { text-align: center; font-size: 10px; letter-spacing: 4px; color: var(--neon-purple); padding: 40px; }
+
+        .event-code-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            align-items: center;
+        }
+
+        .event-code-row:last-child { border-bottom: none; }
+
+        .event-code-row input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-family: 'Raleway', sans-serif;
+            letter-spacing: 2px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .event-code-row input:focus { border-color: var(--neon-purple); }
+
+        .event-name { color: rgba(255, 255, 255, 0.8); font-size: 12px; font-weight: 600; }
+
+        /* Floating Back Button */
+        .floating-back-btn {
+            position: fixed;
+            top: 5px;
+            left: 15px;
+            width: 40px;
+            height: 40px;
+            background: #6c757d;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .floating-back-btn:hover {
+            background: #545b62;
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+    </style>
+</head>
+<a href="/login" class="floating-back-btn">←</a>
+
+<body>
+
+    <div class="stars-container" id="stars"></div>
+
+    <header>
+        <h2>ADMIN CONTROL</h2>
+        <p class="subtitle">System Configuration & Live Monitor</p>
+    </header>
+
+    <div class="container">
+
+        <div class="card">
+            <h3>Field Mapping</h3>
+            <div class="form-group">
+                <label>Registration Number</label>
+                <select id="regCol"><option value="">Scanning Columns...</option></select>
+            </div>
+            <div class="form-group">
+                <label>Event Category</label>
+                <select id="eventCol"><option value="">Scanning Columns...</option></select>
+            </div>
+            <div class="form-group">
+                <label>College Institution</label>
+                <select id="collegeCol"><option value="">Scanning Columns...</option></select>
+            </div>
+            <div class="form-group">
+                <label>Specify College Name (for "Others" option)</label>
+                <select id="specifyCollegeCol"><option value="">Scanning Columns...</option></select>
+            </div>
+            <div class="form-group">
+                <label>Team Lead / Representative</label>
+                <select id="leaderCol"><option value="">Scanning Columns...</option></select>
+            </div>
+            <div class="form-group">
+                <label>Contact Number / Phone</label>
+                <select id="contactCol"><option value="">Scanning Columns...</option></select>
+            </div>
+            <div class="form-group">
+                <label>Sub-Member Columns</label>
+                <div class="checkbox-group" id="memberCols">
+                    <div class="loading">AWAITING SYNC...</div>
+                </div>
+            </div>
+            <button onclick="saveMapping()" id="saveBtn">Save Configuration</button>
+            <div id="mapSuccess"></div>
+        </div>
+
+        <div class="card">
+            <h3>Event Access Codes</h3>
+            <div id="eventCodesContainer" style="max-height: 400px; overflow-y: auto;">
+                <div class="loading">Loading Events...</div>
+            </div>
+            <button onclick="saveEventCodes()" id="saveCodesBtn" style="margin-top: 20px;">Save Event Codes</button>
+            <div id="codesSuccess"></div>
+        </div>
+
+        <div class="card">
+            <h3>User Password Management</h3>
+            <div class="form-group">
+                <label>Select User</label>
+                <select id="userSelect" onchange="selectUser()">
+                    <option value="">-- Choose User --</option>
+                    <option value="register">Registration Desk</option>
+                    <option value="coordinator">Event Coordinator</option>
+                    <option value="certificate">Certificate Officer</option>
+                    <option value="admin">Admin</option>
+                    <option value="superadmin">Super Admin</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>New Password</label>
+                <div style="position: relative;">
+                    <input type="password" id="newPassword" class="form-input" placeholder="ENTER NEW PASSWORD" style="width: 100%; padding-right: 50px;">
+                    <button type="button" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 20px; padding: 8px; pointer-events: none;">
+                        <span id="newPasswordIcon" style="pointer-events: auto; cursor: pointer; color: rgba(255,255,255,0.6);" onclick="toggleNewPasswordVisibility()">👁️</span>
+                    </button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <div style="position: relative;">
+                    <input type="password" id="confirmPassword" class="form-input" placeholder="CONFIRM NEW PASSWORD" style="width: 100%; padding-right: 50px;">
+                    <button type="button" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 20px; padding: 8px; pointer-events: none;">
+                        <span id="confirmPasswordIcon" style="pointer-events: auto; cursor: pointer; color: rgba(255,255,255,0.6);" onclick="toggleConfirmPasswordVisibility()">👁️</span>
+                    </button>
+                </div>
+            </div>
+            <button onclick="changeUserPassword()" id="changePassBtn">Update Password</button>
+            <div id="passwordSuccess"></div>
+            <div id="passwordError"></div>
+        </div>    </div>
+
+    <script>
+        // Stars Generation
+        const starsContainer = document.getElementById('stars');
+        for (let i = 0; i < 100; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 2 + 'px';
+            star.style.width = size; star.style.height = size;
+            star.style.top = Math.random() * 100 + '%';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.setProperty('--duration', Math.random() * 3 + 2 + 's');
+            starsContainer.appendChild(star);
+        }
+
+        // Load current mapping and populate columns
+        fetch("/get_excel_columns")
+            .then(res => res.json())
+            .then(cols => {
+                if (!cols || cols.length === 0) return;
+                
+                // Populate all dropdowns
+                ["regCol", "eventCol", "collegeCol", "specifyCollegeCol", "leaderCol", "contactCol"].forEach(id => {
+                    const sel = document.getElementById(id);
+                    sel.innerHTML = "<option value=''>Select Column...</option>";
+                    cols.forEach(c => {
+                        const opt = document.createElement("option");
+                        opt.value = c; opt.innerText = c;
+                        sel.appendChild(opt);
+                    });
+                });
+                
+                // Populate member checkboxes
+                const memberBox = document.getElementById("memberCols");
+                memberBox.innerHTML = "";
+                cols.forEach(c => {
+                    const lbl = document.createElement("label");
+                    lbl.className = "checkbox-label";
+                    lbl.innerHTML = `<input type="checkbox" value="${c}"> <span>${c}</span>`;
+                    memberBox.appendChild(lbl);
+                });
+                
+                // Load and set current mapping values
+                fetch("/get_column_map")
+                    .then(res => res.json())
+                    .then(mapping => {
+                        if (mapping) {
+                            if (mapping.reg_no) document.getElementById("regCol").value = mapping.reg_no;
+                            if (mapping.event) document.getElementById("eventCol").value = mapping.event;
+                            if (mapping.college) document.getElementById("collegeCol").value = mapping.college;
+                            if (mapping.specify_college) document.getElementById("specifyCollegeCol").value = mapping.specify_college;
+                            if (mapping.team_leader) document.getElementById("leaderCol").value = mapping.team_leader;
+                            if (mapping.contact) document.getElementById("contactCol").value = mapping.contact;
+                            
+                            // Set member checkboxes
+                            if (mapping.team_members && Array.isArray(mapping.team_members)) {
+                                mapping.team_members.forEach(col => {
+                                    const checkbox = document.querySelector(`#memberCols input[value="${col}"]`);
+                                    if (checkbox) checkbox.checked = true;
+                                });
+                            }
+                        }
+                    })
+                    .catch(err => console.log("No existing mapping found"));
+            });
+
+        function saveMapping() {
+            const data = {
+                reg_no: document.getElementById("regCol").value,
+                event: document.getElementById("eventCol").value,
+                college: document.getElementById("collegeCol").value,
+                specify_college: document.getElementById("specifyCollegeCol").value,
+                team_leader: document.getElementById("leaderCol").value,
+                contact: document.getElementById("contactCol").value,
+                team_members: Array.from(document.querySelectorAll("#memberCols input:checked")).map(cb => cb.value)
+            };
+
+                        
+            const btn = document.getElementById("saveBtn");
+            btn.innerText = "UPLOADING...";
+            btn.disabled = true;
+
+            fetch("/save_column_map", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(data)
+            }).then(res => res.json())
+            .then(data => {
+                btn.innerText = "Save Configuration";
+                btn.disabled = false;
+                document.getElementById("mapSuccess").innerText = "Configuration saved successfully!";
+                setTimeout(() => {
+                    document.getElementById("mapSuccess").innerText = "";
+                }, 3000);
+            }).catch(err => {
+                console.error("Save failed:", err);
+                btn.innerText = "Save Configuration";
+                btn.disabled = false;
+                document.getElementById("mapSuccess").innerText = "Error saving configuration!";
+            });
+        }
+
+        // Load event codes on page load
+        loadEventCodes();
+
+        function loadEventCodes() {
+            fetch("/get_events")
+                .then(res => res.json())
+                .then(events => {
+                    const container = document.getElementById("eventCodesContainer");
+                    container.innerHTML = "";
+                    
+                    if (!events || events.length === 0) {
+                        container.innerHTML = '<div class="loading">No events found</div>';
+                        return;
+                    }
+
+                    // Fetch existing codes
+                    fetch("/get_event_codes_admin")
+                        .then(res => res.json())
+                        .then(codes => {
+                            events.forEach(event => {
+                                const code = codes[event] || "";
+                                const row = document.createElement("div");
+                                row.className = "event-code-row";
+                                row.innerHTML = `
+                                    <div class="event-name">${event}</div>
+                                    <input type="text" class="event-code-input" data-event="${event}" value="${code}" placeholder="Enter code" maxlength="10" style="text-transform: uppercase;">
+                                `;
+                                container.appendChild(row);
+                            });
+                        })
+                        .catch(err => {
+                            console.error("Error loading codes:", err);
+                            container.innerHTML = '<div class="loading">Error loading codes</div>';
+                        });
+                })
+                .catch(err => {
+                    console.error("Error loading events:", err);
+                    document.getElementById("eventCodesContainer").innerHTML = '<div class="loading">Error loading events</div>';
+                });
+        }
+
+        function saveEventCodes() {
+            const inputs = document.querySelectorAll(".event-code-input");
+            const codes = {};
+            
+            inputs.forEach(input => {
+                const event = input.getAttribute("data-event");
+                const code = input.value.trim().toUpperCase();
+                if (code) {
+                    codes[event] = code;
+                }
+            });
+
+            const btn = document.getElementById("saveCodesBtn");
+            btn.innerText = "UPLOADING...";
+            btn.disabled = true;
+
+            fetch("/save_event_codes_admin", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(codes)
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.innerText = "Save Event Codes";
+                btn.disabled = false;
+                document.getElementById("codesSuccess").innerText = "Event codes saved successfully!";
+                document.getElementById("codesSuccess").style.display = "block";
+                setTimeout(() => {
+                    document.getElementById("codesSuccess").style.display = "none";
+                }, 3000);
+            })
+            .catch(err => {
+                console.error("Save failed:", err);
+                btn.innerText = "Save Event Codes";
+                btn.disabled = false;
+                document.getElementById("codesSuccess").innerText = "Error saving codes!";
+                document.getElementById("codesSuccess").style.display = "block";
+            });
+        }
+
+        // Password Management Functions
+        function toggleNewPasswordVisibility() {
+            const input = document.getElementById("newPassword");
+            const icon = document.getElementById("newPasswordIcon");
+            if (input.type === "password") {
+                input.type = "text";
+                icon.innerText = "🙈";
+            } else {
+                input.type = "password";
+                icon.innerText = "👁️";
+            }
+        }
+
+        function toggleConfirmPasswordVisibility() {
+            const input = document.getElementById("confirmPassword");
+            const icon = document.getElementById("confirmPasswordIcon");
+            if (input.type === "password") {
+                input.type = "text";
+                icon.innerText = "🙈";
+            } else {
+                input.type = "password";
+                icon.innerText = "👁️";
+            }
+        }
+
+        function selectUser() {
+            document.getElementById("passwordError").style.display = "none";
+            document.getElementById("passwordSuccess").style.display = "none";
+        }
+
+        function changeUserPassword() {
+            const user = document.getElementById("userSelect").value;
+            const newPass = document.getElementById("newPassword").value.trim();
+            const confirmPass = document.getElementById("confirmPassword").value.trim();
+            const errorDiv = document.getElementById("passwordError");
+            const successDiv = document.getElementById("passwordSuccess");
+
+            errorDiv.style.display = "none";
+            successDiv.style.display = "none";
+
+            if (!user) {
+                errorDiv.innerText = "Please select a user";
+                errorDiv.style.display = "block";
+                return;
+            }
+
+            if (!newPass) {
+                errorDiv.innerText = "Please enter a new password";
+                errorDiv.style.display = "block";
+                return;
+            }
+
+            if (newPass.length < 6) {
+                errorDiv.innerText = "Password must be at least 6 characters";
+                errorDiv.style.display = "block";
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                errorDiv.innerText = "Passwords do not match";
+                errorDiv.style.display = "block";
+                return;
+            }
+
+            const btn = document.getElementById("changePassBtn");
+            btn.innerText = "UPDATING...";
+            btn.disabled = true;
+
+            fetch("/change_user_password", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    user: user,
+                    new_password: newPass
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.innerText = "Update Password";
+                btn.disabled = false;
+                
+                if (data.error) {
+                    errorDiv.innerText = data.error;
+                    errorDiv.style.display = "block";
+                } else {
+                    successDiv.innerText = `Password updated successfully for ${user}!`;
+                    successDiv.style.display = "block";
+                    document.getElementById("newPassword").value = "";
+                    document.getElementById("confirmPassword").value = "";
+                    document.getElementById("userSelect").value = "";
+                    setTimeout(() => {
+                        successDiv.style.display = "none";
+                    }, 4000);
+                }
+            })
+            .catch(err => {
+                console.error("Error:", err);
+                btn.innerText = "Update Password";
+                btn.disabled = false;
+                errorDiv.innerText = "Error updating password";
+                errorDiv.style.display = "block";
+            });
+        }
+
+    </script>
+</body>
+</html>

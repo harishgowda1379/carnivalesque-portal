@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carnivalesque 26 - Super Admin Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Raleway:wght@200;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-gold: #ffcc00;
+            --neon-purple: #ba68ff;
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --border-glow: rgba(255, 204, 0, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Raleway', sans-serif;
+            background-color: #050505;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.8)), 
+                              url('/static/images/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .stars-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        .star { position: absolute; background: white; border-radius: 50%; opacity: 0.5; animation: twinkle var(--duration) infinite ease-in-out; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(1); } 50% { opacity: 1; transform: scale(1.4); } }
+
+        header {
+            padding: 30px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .back-to-login-btn {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-family: 'Raleway', sans-serif;
+            font-size: 12px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .back-to-login-btn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.4);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding-left: 100px;
+                text-align: center;
+            }
+            .back-to-login-btn {
+                padding: 6px 12px;
+                font-size: 10px;
+                left: 10px;
+            }
+        }
+
+        header {
+            font-family: 'Syncopate', sans-serif;
+            letter-spacing: 10px;
+            text-transform: uppercase;
+            font-size: 20px;
+            text-shadow: 0 0 20px var(--neon-gold);
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+
+        h3 {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 14px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+            color: var(--neon-gold);
+        }
+
+        .event-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .event-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .rating-select {
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .not-started { background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.5); }
+        .started { background: rgba(255, 204, 0, 0.2); color: var(--neon-gold); border: 1px solid var(--neon-gold); }
+        .locked { background: rgba(255, 75, 75, 0.2); color: #ff4b4b; border: 1px solid #ff4b4b; }
+
+        .winners-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .winners-section strong {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .winner-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            background: rgba(255, 255, 255, 0.02);
+            font-size: 13px;
+        }
+
+        .champion-section {
+            background: linear-gradient(135deg, rgba(255, 204, 0, 0.1), rgba(255, 204, 0, 0.05));
+            border: 2px solid var(--neon-gold);
+            padding: 30px;
+            margin-top: 30px;
+        }
+
+        .champion-card {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--neon-gold);
+        }
+
+        .champion-rank {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--neon-gold);
+            margin-bottom: 10px;
+        }
+
+        .champion-college {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .champion-points {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 10px;
+        }
+
+        .champion-wins {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 10px;
+        }
+
+        .champion-wins div {
+            padding: 4px 0;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: transparent;
+            border: 1px solid var(--neon-gold);
+            color: var(--neon-gold);
+            font-family: 'Syncopate', sans-serif;
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background: var(--neon-gold);
+            color: #000;
+            box-shadow: 0 0 20px var(--border-glow);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .stars {
+            color: var(--neon-gold);
+        }
+
+        /* Reset Winners Button */
+        .reset-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 75, 75, 0.1);
+            border: 1px solid rgba(255, 75, 75, 0.5);
+            color: #ff4b4b;
+            font-family: 'Raleway', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: rgba(255, 75, 75, 0.2);
+            border-color: #ff4b4b;
+            box-shadow: 0 0 15px rgba(255, 75, 75, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .reset-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Floating Back Button */
+        .floating-back-btn {
+            position: fixed;
+            top: 5px;
+            left: 15px;
+            width: 40px;
+            height: 40px;
+            background: #6c757d;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .floating-back-btn:hover {
+            background: #545b62;
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+    </style>
+</head>
+
+<a href="/login" class="floating-back-btn">←</a>
+
+<body>
+    <div class="stars-container" id="stars"></div>
+
+    <header>
+        Super Admin Control Panel
+    </header>
+
+    <div class="container">
+        <!-- Event Status -->
+        <div class="card">
+            <h3>Event Status & Ratings</h3>
+            <div id="eventStatus">
+                <div class="loading">Loading events...</div>
+            </div>
+        </div>
+
+        <!-- Overall Champion -->
+        <div class="card champion-section">
+            <h3>🏆 Overall Champion</h3>
+            <button onclick="calculateChampion()" id="championBtn">Calculate Champion</button>
+            <div id="championResults"></div>
+        </div>
+    </div>
+
+    <script>
+        // Stars Generation
+        const starsContainer = document.getElementById('stars');
+        for (let i = 0; i < 100; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 2 + 'px';
+            star.style.width = size;
+            star.style.height = size;
+            star.style.top = Math.random() * 100 + '%';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.setProperty('--duration', Math.random() * 3 + 2 + 's');
+            starsContainer.appendChild(star);
+        }
+
+        function loadDashboard() {
+            fetch("/super_admin_dashboard")
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById("eventStatus");
+                    container.innerHTML = "";
+
+                    const events = Object.keys(data);
+                    if (events.length === 0) {
+                        container.innerHTML = "<div class='loading'>No events found</div>";
+                        return;
+                    }
+
+                    events.forEach(event => {
+                        const e = data[event];
+                        const rating = e.rating || 3;
+
+                        let statusText = "Not Started";
+                        let statusClass = "not-started";
+
+                        if (e.event_started && !e.event_ended) {
+                            statusText = "In Progress";
+                            statusClass = "started";
+                        }
+
+                        if (e.event_ended) {
+                            statusText = "Completed";
+                            statusClass = "locked";
+                        }
+
+                        let winnersHtml = "<div style='font-size:11px; color:rgba(255,255,255,0.3)'>No winners declared</div>";
+                        const winners = Object.keys(e.winners);
+                        if (winners.length > 0) {
+                            winnersHtml = "";
+                            winners.sort((a, b) => parseInt(a) - parseInt(b)).forEach(pos => {
+                                const w = e.winners[pos];
+                                const medal = pos == 1 ? "🥇" : pos == 2 ? "🥈" : "🥉";
+                                const college = w.college ? ` <span style="font-size:11px; color:rgba(255,255,255,0.6)">(${w.college})</span>` : "";
+                                winnersHtml += `
+                                    <div class="winner-item">
+                                        ${medal} <strong>${pos}${pos == 1 ? "st" : pos == 2 ? "nd" : "rd"}:</strong>
+                                        ${w.reg_no} – ${w.team.join(", ")}${college}
+                                    </div>
+                                `;
+                            });
+                        }
+
+                        const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
+
+                        const card = document.createElement("div");
+                        card.className = "event-card";
+                        
+                        // Add reset button if event has winners and is completed
+                        let resetButtonHtml = "";
+                        if (winners.length > 0 && e.event_ended) {
+                            resetButtonHtml = `
+                                <div class="reset-section">
+                                    <button class="reset-btn" onclick="resetWinners('${event}')">
+                                        🔄 Reset Winners
+                                    </button>
+                                </div>
+                            `;
+                        }
+                        
+                        card.innerHTML = `
+                            <div class="event-header">
+                                <div class="event-title">${event}</div>
+                                <div class="stars">${stars}</div>
+                            </div>
+                            <div>
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                            <div class="winners-section">
+                                <strong>Winners</strong>
+                                ${winnersHtml}
+                            </div>
+                            ${resetButtonHtml}
+                        `;
+                        container.appendChild(card);
+                    });
+                })
+                .catch(error => {
+                    document.getElementById("eventStatus").innerHTML = "<div class='loading'>Error loading events</div>";
+                });
+        }
+
+        function calculateChampion() {
+            const btn = document.getElementById("championBtn");
+            const originalText = btn.textContent;
+            btn.textContent = "CALCULATING...";
+            btn.disabled = true;
+
+            fetch("/calculate_champion")
+                .then(res => {
+                    console.log("Response status:", res.status);
+                    return res.json();
+                })
+                .then(data => {
+                    console.log("Champion data:", data);
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+
+                    const container = document.getElementById("championResults");
+                    container.innerHTML = "";
+
+                    if (!data.champions || data.champions.length === 0) {
+                        container.innerHTML = "<div class='loading'>No champions yet. Complete events to calculate.</div>";
+                        return;
+                    }
+
+                    data.champions.forEach((champ, index) => {
+                        const rank = index + 1;
+                        const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`;
+
+                        const card = document.createElement("div");
+                        card.className = "champion-card";
+                        card.innerHTML = `
+                            <div class="champion-rank">${medal} Rank ${rank}</div>
+                            <div class="champion-college">${champ.college}</div>
+                            <div class="champion-points">Total Points: <strong>${champ.total_points}</strong></div>
+                            <div class="champion-wins">
+                                <strong>Wins:</strong>
+                                ${champ.wins.map(w => `
+                                    <div>${w.event} - ${w.position === 1 ? '1st' : w.position === 2 ? '2nd' : '3rd'} Place (+${w.points} pts, ${w.rating}★)</div>
+                                `).join('')}
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                })
+                .catch(error => {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                    document.getElementById("championResults").innerHTML = "<div class='loading'>Error calculating champion</div>";
+                });
+        }
+
+        function resetWinners(eventName) {
+            if (!confirm(`Are you sure you want to reset winners for "${eventName}"? This will allow the coordinator to reassign winners.`)) {
+                return;
+            }
+
+            fetch("/reset_winners", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ event: eventName })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Winners for "${eventName}" have been reset. The coordinator can now reassign them.`);
+                    loadDashboard(); // Refresh the dashboard
+                } else {
+                    alert(`Error resetting winners: ${data.error || 'Unknown error'}`);
+                }
+            })
+            .catch(error => {
+                console.error("Error resetting winners:", error);
+                alert("Error resetting winners. Please try again.");
+            });
+        }
+
+        // Load dashboard on page load
+        loadDashboard();
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadDashboard, 30000);
+    </script>
+</body>
+</html>
