@@ -60,9 +60,18 @@
         overflow-x: hidden;
         position: relative;
         line-height: 1.6;
+<<<<<<< HEAD
         cursor: auto;
     }
 
+=======
+        cursor: none;
+    }
+
+    body.cursor-active {
+        cursor: auto;
+    }
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
 
     /* ================= SIMPLE STATIC BACKGROUND ================= */
     .static-bg {
@@ -164,6 +173,72 @@
         75% { transform: translateY(20px) translateX(10px); }
     }
 
+<<<<<<< HEAD
+=======
+    /* ================= CUSTOM CURSOR ================= */
+    .cursor {
+        position: fixed;
+        width: 24px;
+        height: 24px;
+        pointer-events: none;
+        z-index: 9999;
+        transition: transform 0.08s ease;
+        mix-blend-mode: difference;
+    }
+
+    .cursor-dot {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: var(--neon-purple);
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 
+            0 0 20px var(--neon-purple),
+            0 0 40px var(--neon-purple);
+        transition: all 0.2s ease;
+    }
+
+    .cursor-ring {
+        position: absolute;
+        width: 48px;
+        height: 48px;
+        border: 2px solid var(--neon-purple);
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        opacity: 0.4;
+        animation: pulseRing 2s ease-in-out infinite;
+        transition: all 0.3s ease;
+    }
+
+    .cursor-trail {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        border: 1px solid rgba(186, 104, 255, 0.2);
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+        transition: all 0.4s ease;
+    }
+
+    @keyframes pulseRing {
+        0%, 100% { 
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.3;
+        }
+        50% { 
+            transform: translate(-50%, -50%) scale(1.1);
+            opacity: 0.6;
+        }
+    }
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
 
     /* ================= LOADER ================= */
     #loaderOverlay {
@@ -597,7 +672,30 @@
         letter-spacing: 3px;
     }
 
+<<<<<<< HEAD
         @font-face {
+=======
+    .skip-to-content {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: var(--neon-purple);
+        color: #000;
+        padding: 10px 20px;
+        text-decoration: none;
+        z-index: 100;
+        font-weight: 600;
+        border-radius: 0 0 6px 0;
+        transition: all 0.3s ease;
+    }
+
+    .skip-to-content:focus {
+        top: 0;
+        padding: 15px 25px;
+        box-shadow: 0 0 20px var(--neon-purple);
+    }
+    @font-face {
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
     font-family: 'Foxgrab';
     src: url('/static/fonts/Foxgrab.ttf') format('truetype');
     font-weight: normal;
@@ -665,7 +763,13 @@ body {
     </head>
 
     <body>
+<<<<<<< HEAD
         
+=======
+        <!-- Skip to main content -->
+        <a href="#main-content" class="skip-to-content">Skip to main content</a>
+
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
         <!-- LOADER -->
         <div id="loaderOverlay" role="status" aria-live="polite">
             <img src="/static/images/logo.png" alt="Carnivalesque 26 Logo" class="loader-logo">
@@ -682,6 +786,15 @@ body {
         <!-- STARS OVERLAY -->
         <div class="stars-container" id="stars" aria-hidden="true"></div>
 
+<<<<<<< HEAD
+=======
+        <!-- CUSTOM CURSOR -->
+        <div class="cursor" id="cursor">
+            <div class="cursor-dot"></div>
+            <div class="cursor-ring"></div>
+            <div class="cursor-trail"></div>
+        </div>
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
 
         <!-- MAIN CONTENT -->
         <main class="container" id="main-content" role="main">
@@ -761,6 +874,10 @@ body {
     document.addEventListener('DOMContentLoaded', () => {
         // Initialize effects
         createStars();
+<<<<<<< HEAD
+=======
+        setupCustomCursor();
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
         
         // Handle window resize
         let resizeTimeout;
@@ -823,6 +940,64 @@ body {
     });
 
 
+<<<<<<< HEAD
+=======
+    // ================= CUSTOM CURSOR =================
+    function setupCustomCursor() {
+        if (isTouchDevice) {
+            document.getElementById('cursor').style.display = 'none';
+            document.body.classList.add('cursor-active');
+            return;
+        }
+        
+        const cursor = document.getElementById('cursor');
+        const cursorDot = cursor.querySelector('.cursor-dot');
+        const cursorRing = cursor.querySelector('.cursor-ring');
+        
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = `${e.clientX}px`;
+            cursor.style.top = `${e.clientY}px`;
+            
+            // Interactive cursor effects
+            const hoverTarget = e.target;
+            const isInteractive = hoverTarget.closest('.role-box, .form-button, .form-input, .back-link');
+            
+            if (isInteractive) {
+                cursor.style.transform = 'scale(1.3)';
+                cursorDot.style.background = '#ffffff';
+                cursorDot.style.boxShadow = '0 0 30px #ffffff';
+                cursorRing.style.borderColor = '#ffffff';
+                cursorRing.style.borderWidth = '3px';
+            } else {
+                cursor.style.transform = 'scale(1)';
+                cursorDot.style.background = 'var(--neon-purple)';
+                cursorDot.style.boxShadow = '0 0 20px var(--neon-purple)';
+                cursorRing.style.borderColor = 'var(--neon-purple)';
+                cursorRing.style.borderWidth = '2px';
+            }
+        });
+        
+        // Click effect
+        document.addEventListener('mousedown', () => {
+            cursor.style.transform = 'scale(0.8)';
+        });
+        
+        document.addEventListener('mouseup', () => {
+            cursor.style.transform = 'scale(1)';
+        });
+        
+        // Hide during typing
+        const textInputs = document.querySelectorAll('input, textarea');
+        textInputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                cursor.style.opacity = '0.2';
+            });
+            input.addEventListener('blur', () => {
+                cursor.style.opacity = '1';
+            });
+        });
+    }
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
 
     // ================= LOADER CONTROL =================
     function showLoader(message = "Loading...") {
@@ -1048,7 +1223,11 @@ body {
         const isVisible = document.visibilityState === 'visible';
         
         // Pause/resume animations
+<<<<<<< HEAD
         document.querySelectorAll('.star').forEach(el => {
+=======
+        document.querySelectorAll('.star, .cursor-ring').forEach(el => {
+>>>>>>> d5f4caf4c7e7c8c744b5340ebd349feba4b9da00
             el.style.animationPlayState = isVisible ? 'running' : 'paused';
         });
     });
