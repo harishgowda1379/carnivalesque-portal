@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: carnivalesque-portal
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python start.py
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.11
+    healthCheckPath: /
+    disk:
+      name: data
+      mountPath: /app/data
+      sizeGB: 1
