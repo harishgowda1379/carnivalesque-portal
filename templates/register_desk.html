@@ -944,7 +944,9 @@
 
                 </div>
 
+                <div class="error" id="error"></div>
 
+                <div class="success" id="success" style="display: none;">Marked as Reported</div>
 
                 <div class="editor" id="editor">
 
@@ -961,19 +963,6 @@
 
 
             <button type="button" onclick="markReported();" id="markBtn">Authorize & Report Entry</button>
-
-
-                    <div class="editor" id="editor">
-
-                        <div class="editor-title">Team Editor (Max 20)</div>
-
-                        <div class="editor-grid" id="editorGrid"></div>
-
-                        <div class="hint">Tip: first name is treated as Leader/Primary. Empty rows are ignored.</div>
-
-                        <button type="button" onclick="saveTeamMembers()" id="saveTeamBtn" style="margin-top: 18px;">Save Team Members</button>
-
-                    </div>
 
 
         <div class="qr-section">
@@ -1071,8 +1060,7 @@
         .then(res => res.json())
 
         .then(data => {
-            console.log("DEBUG: Received data:", data);
-            
+
             fetchBtn.innerText = "RETRIEVE DATA";
 
             fetchBtn.disabled = false;
@@ -1093,7 +1081,6 @@
 
 
 
-            console.log("DEBUG: Updating DOM elements");
             document.getElementById("event").textContent = data.event;
 
             document.getElementById("college").textContent = data.college;
