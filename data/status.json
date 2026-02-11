@@ -3,7 +3,6 @@
         "event": "FC26 EA SPORTS",
         "reported": true,
         "event_started": true,
-        "event_ended": true,
-        "position": 1
+        "event_ended": false
     }
 }
