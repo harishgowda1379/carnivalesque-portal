@@ -1323,66 +1323,16 @@
 
             }
 
+        })
 
+        .catch(error => {
 
-            document.getElementById("success").style.display = "block";
+            console.error("DEBUG: Error in markReported:", error);
 
-            document.getElementById("details").style.display = "none";
+            document.getElementById("error").textContent = "Network error. Please try again.";
 
-            document.getElementById("regNo").value = "";
-
+            document.getElementById("error").style.display = "block";
             
-
-            // Clear all old member details
-
-            document.getElementById("event").textContent = "";
-
-            document.getElementById("college").textContent = "";
-
-            document.getElementById("teamSize").textContent = "";
-
-            document.getElementById("teamList").innerHTML = "";
-
-            
-
-            // Clear editor grid
-
-            document.getElementById("editorGrid").innerHTML = "";
-
-            
-
-            // Reset variables
-
-            currentReg = "";
-
-            currentTeam = [];
-
-            currentEventMax = 20;
-
-            
-
-            // Reset add member button
-
-            const addBtn = document.getElementById("addMemberBtn");
-
-            if (addBtn) {
-
-                addBtn.textContent = "+ Add Member";
-
-                addBtn.disabled = false;
-
-                addBtn.style.opacity = "1";
-
-            }
-
-            
-
-            // Hide editor
-
-            hideEditor();
-
-            
-
             markBtn.innerText = "AUTHORIZE & REPORT ENTRY";
 
             markBtn.disabled = false;
