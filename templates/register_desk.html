@@ -1071,7 +1071,8 @@
         .then(res => res.json())
 
         .then(data => {
-
+            console.log("DEBUG: Received data:", data);
+            
             fetchBtn.innerText = "RETRIEVE DATA";
 
             fetchBtn.disabled = false;
@@ -1092,6 +1093,7 @@
 
 
 
+            console.log("DEBUG: Updating DOM elements");
             document.getElementById("event").textContent = data.event;
 
             document.getElementById("college").textContent = data.college;
