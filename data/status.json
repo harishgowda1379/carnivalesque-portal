@@ -5,7 +5,8 @@
             "harish"
         ],
         "reported": true,
-        "event_started": false,
-        "event_ended": false
+        "event_started": true,
+        "event_ended": true,
+        "position": 1
     }
 }
