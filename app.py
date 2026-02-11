@@ -321,19 +321,11 @@ def get_team_for_reg(reg_no, row, mapping, status):
     """
     Returns team list for a registration number.
     Priority:
-      1) extracted team from Excel row (primary source)
-      2) status[reg_no]['team_override'] if present and non-empty (fallback)
+      1) status[reg_no]['team_override'] if present and non-empty (for recently edited teams)
+      2) extracted team from Excel row (primary source)
     """
     try:
-        # First try to get team from Excel (primary source)
-        excel_team = extract_team(row, mapping) if row is not None else []
-        if excel_team:  # If Excel has team data, use it
-            return excel_team
-    except Exception:
-        pass
-
-    try:
-        # Fallback to spot registration override
+        # First check for override (for recently edited teams)
         override = status.get(reg_no, {}).get("team_override")
         if isinstance(override, list) and len([x for x in override if str(x).strip()]) > 0:
             # normalize + drop blanks
@@ -349,6 +341,14 @@ def get_team_for_reg(reg_no, row, mapping, status):
                 seen.add(key)
                 out.append(name)
             return out
+    except Exception:
+        pass
+
+    try:
+        # Fallback to Excel data
+        excel_team = extract_team(row, mapping) if row is not None else []
+        if excel_team:  # If Excel has team data, use it
+            return excel_team
     except Exception:
         pass
 
@@ -977,9 +977,33 @@ def update_team_members():
     row0 = row.iloc[0]
     event = row0[mapping["event"]]
 
+    # Update Excel file
+    try:
+        # Find the row index
+        idx = df[df[mapping["reg_no"]] == reg_no].index[0]
+        
+        # Update team member columns
+        team_members_cols = mapping.get("team_members", [])
+        for i, name in enumerate(cleaned):
+            if i < len(team_members_cols):
+                df.at[idx, team_members_cols[i]] = name
+        
+        # Clear any extra team member columns
+        for i in range(len(cleaned), len(team_members_cols)):
+            df.at[idx, team_members_cols[i]] = ""
+        
+        # Update team leader if exists
+        if "team_leader" in mapping and cleaned:
+            df.at[idx, mapping["team_leader"]] = cleaned[0]
+        
+        # Save to Excel
+        df.to_excel(EXCEL_PATH, index=False)
+    except Exception as e:
+        return jsonify({"error": f"Failed to update Excel: {str(e)}"})
+
+    # Also save to status for backup
     status = load_status()
     status.setdefault(reg_no, {})
-    # keep event in status for consistency
     status[reg_no]["event"] = event
     status[reg_no]["team_override"] = cleaned
     save_status(status)

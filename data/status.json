@@ -2,7 +2,10 @@
     "C260001": {
         "event": "FC26 EA SPORTS",
         "reported": true,
-        "event_started": true,
-        "event_ended": false
+        "event_started": false,
+        "event_ended": false,
+        "team_override": [
+            "harish"
+        ]
     }
 }
