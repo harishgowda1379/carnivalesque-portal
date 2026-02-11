@@ -1214,6 +1214,39 @@ def end_event():
     return jsonify({"success": True})
 
 
+# --------------------------------------------------
+# 🔄 RESET WINNERS (SUPER ADMIN ONLY)
+# --------------------------------------------------
+@app.route("/reset_winners", methods=["POST"])
+@role_required("super_admin")
+def reset_winners():
+    """Reset winners for an event - allows coordinator to reassign"""
+    data = request.get_json(silent=True) or {}
+    event = data.get("event")
+    
+    if not event:
+        return jsonify({"error": "Event name required"}), 400
+    
+    status = load_status()
+    reset_count = 0
+    
+    # Reset event_ended and position for all teams in this event
+    for reg_no, team_status in status.items():
+        if team_status.get("event") == event and team_status.get("event_ended"):
+            team_status["event_ended"] = False
+            team_status.pop("position", None)  # Remove position
+            reset_count += 1
+    
+    if reset_count == 0:
+        return jsonify({"error": "No winners found for this event"}), 404
+    
+    save_status(status)
+    return jsonify({
+        "success": True, 
+        "message": f"Reset {reset_count} winner(s) for event '{event}'"
+    })
+
+
 # ---------- CERTIFICATE TEAM ---------- #
 
 @csrf.exempt
