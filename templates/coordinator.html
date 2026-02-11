@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Event Coordinator - Carnivalesque 26</title>
     <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Raleway:wght@200;400;600&display=swap" rel="stylesheet">
     <style>
@@ -572,7 +573,10 @@
     function startEvent() {
         fetch("/start_event", {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
             body: JSON.stringify({ event: currentEvent })
         }).then(() => {
             eventStarted = true;
@@ -611,8 +615,14 @@
 
         fetch("/end_event", {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ winners: winners })
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ 
+                event: currentEvent,
+                winners: winners 
+            })
         }).then(res => res.json()).then(data => {
             if (data.error) {
                 document.getElementById("endError").style.display = "block";

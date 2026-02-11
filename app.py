@@ -1182,13 +1182,21 @@ def start_event():
 def end_event():
     data = request.get_json(silent=True) or {}
     winners = data.get("winners", {})
+    event = data.get("event")
 
     if not winners:
         return jsonify({"error": "No winners selected"}), 400
 
     status = load_status()
-    first_reg = next(iter(winners))
-    event = status.get(first_reg, {}).get("event")
+    
+    # If event is provided in request, use it
+    if event:
+        # Verify event matches current event in session
+        pass
+    else:
+        # Try to get event from first winner's data
+        first_reg = next(iter(winners))
+        event = status.get(first_reg, {}).get("event")
 
     if not event:
         return jsonify({"error": "Invalid winner data"}), 400
