@@ -1895,7 +1895,10 @@
                 // Save to backend
                 fetch('/add_college', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
                     body: JSON.stringify({ college: newCollege })
                 }).catch(err => console.error('Failed to save college:', err));
             }
@@ -1910,15 +1913,35 @@
         collegeDiv.textContent = newCollege;
         
         // Update current registration data if exists
-        if (currentRegistrationData) {
-            currentRegistrationData.college = newCollege;
+        if (currentReg) {
+            // Save to backend and Excel
+            fetch('/update_college', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ 
+                    reg_no: currentReg,
+                    college: newCollege 
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Failed to update college: ' + data.error);
+                } else {
+                    showSuccessMessage('College updated successfully!');
+                }
+            })
+            .catch(err => {
+                console.error('Failed to update college:', err);
+                alert('Failed to update college');
+            });
         }
         
         // Hide edit container
         cancelEditCollege();
-        
-        // Show success message
-        showSuccessMessage('College updated successfully!');
     }
 
     function showSuccessMessage(message) {

@@ -580,6 +580,46 @@ def add_college():
     except Exception as e:
         return jsonify({"success": False, "error": "Failed to save college"}), 500
 
+@app.route("/update_college", methods=["POST"])
+def update_college():
+    """Update college for a specific registration"""
+    data = request.get_json(silent=True) or {}
+    reg_no = data.get("reg_no")
+    college = data.get("college", "").strip()
+    
+    if not reg_no:
+        return jsonify({"error": "Registration number is required"}), 400
+    if not college:
+        return jsonify({"error": "College name is required"}), 400
+    
+    try:
+        df = load_excel()
+        mapping = load_column_map()
+        
+        if not mapping or "college" not in mapping:
+            return jsonify({"error": "College column not mapped"}), 400
+        
+        # Find the registration
+        row = df[df[mapping["reg_no"]] == reg_no]
+        if row.empty:
+            return jsonify({"error": "Registration not found"}), 404
+        
+        # Update Excel file
+        idx = row.index[0]
+        df.at[idx, mapping["college"]] = college
+        df.to_excel(EXCEL_PATH, index=False)
+        
+        # Also update status if exists
+        status = load_status()
+        if reg_no in status:
+            status[reg_no]["college"] = college
+            save_status(status)
+        
+        return jsonify({"success": True, "message": "College updated successfully"})
+        
+    except Exception as e:
+        return jsonify({"error": f"Failed to update college: {str(e)}"}), 500
+
 @csrf.exempt
 @app.route("/get_colleges")
 def get_colleges():
