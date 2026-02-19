@@ -1083,6 +1083,20 @@
 
             document.getElementById("event").textContent = data.event;
 
+            // Disable mark button if event is Unknown Event
+            const markBtn = document.getElementById("markBtn");
+            if (data.event === "Unknown Event") {
+                markBtn.disabled = true;
+                markBtn.textContent = "Event Not Found - Cannot Report";
+                markBtn.style.opacity = "0.5";
+                markBtn.style.cursor = "not-allowed";
+            } else {
+                markBtn.disabled = false;
+                markBtn.textContent = "Authorize & Report Entry";
+                markBtn.style.opacity = "1";
+                markBtn.style.cursor = "pointer";
+            }
+
             document.getElementById("college").textContent = data.college;
 
             document.getElementById("teamSize").textContent = data.team_size;
