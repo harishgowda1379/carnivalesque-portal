@@ -1377,6 +1377,7 @@ def set_event_rating():
     return jsonify({"success": True})
 
 @app.route("/super_admin_dashboard")
+@role_required("super_admin")
 def super_admin_dashboard():
     df = load_excel()
     mapping = load_column_map()
@@ -1425,6 +1426,7 @@ def super_admin_dashboard():
     return jsonify(events)
 
 @app.route("/calculate_champion")
+@role_required("super_admin")
 def calculate_champion():
     status = load_status()
     ratings = load_event_ratings()
