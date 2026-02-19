@@ -1386,17 +1386,29 @@ def super_admin_dashboard():
 
     events = {}
 
+    # First, get all events from Excel file (source of truth)
+    if mapping and mapping.get("event") in df.columns:
+        excel_events = df[mapping["event"]].dropna().unique().tolist()
+        excel_events = [e for e in excel_events if str(e).strip()]  # Remove empty values
+        
+        # Initialize all events with default values
+        for event in excel_events:
+            events[event] = {
+                "event_started": False,
+                "event_ended": False,
+                "winners": {},
+                "rating": ratings.get(event, 3)  # Default to 3 stars
+            }
+
+    # Then, update with status information
     for reg_no, data in status.items():
         event = data.get("event")
         if not event:
             continue
 
-        events.setdefault(event, {
-            "event_started": False,
-            "event_ended": False,
-            "winners": {},
-            "rating": ratings.get(event, 3)  # Default to 3 stars
-        })
+        # Only process events that exist in our events dict
+        if event not in events:
+            continue
 
         if data.get("event_started"):
             events[event]["event_started"] = True
