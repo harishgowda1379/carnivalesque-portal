@@ -1698,6 +1698,77 @@ def submit_spot_registration():
     except Exception as e:
         return jsonify({"error": f"Registration failed: {str(e)}"}), 500
 
+# ---------------- ADMIN OPTIONS ---------------- #
+
+@app.route("/upload_excel", methods=["POST"])
+def upload_excel():
+    """Upload and replace the Excel file"""
+    if 'excel_file' not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+    
+    file = request.files['excel_file']
+    if file.filename == '':
+        return jsonify({"error": "No file selected"}), 400
+    
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        return jsonify({"error": "File must be an Excel file (.xlsx or .xls)"}), 400
+    
+    try:
+        # Create backup of current Excel file
+        import shutil
+        from datetime import datetime
+        backup_path = f"data/registrations_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        if os.path.exists(EXCEL_PATH):
+            shutil.copy2(EXCEL_PATH, backup_path)
+        
+        # Save new Excel file
+        file.save(EXCEL_PATH)
+        
+        # Validate the Excel file has required columns
+        df = pd.read_excel(EXCEL_PATH)
+        mapping = load_column_map()
+        
+        if not mapping:
+            return jsonify({"error": "Column mapping not configured. Please set up column mapping first."}), 400
+        
+        # Check if required columns exist
+        missing_cols = []
+        for key, col_name in mapping.items():
+            if key in ['reg_no', 'event', 'college'] and col_name not in df.columns:
+                missing_cols.append(col_name)
+        
+        if missing_cols:
+            # Restore backup if validation fails
+            if os.path.exists(backup_path):
+                shutil.move(backup_path, EXCEL_PATH)
+            return jsonify({"error": f"Missing required columns: {', '.join(missing_cols)}"}), 400
+        
+        # Clear status.json when Excel is replaced
+        save_status({})
+        
+        return jsonify({
+            "success": True,
+            "message": f"Excel file uploaded successfully. Previous file backed up as {os.path.basename(backup_path)}"
+        })
+        
+    except Exception as e:
+        return jsonify({"error": f"Failed to upload Excel file: {str(e)}"}), 500
+
+@app.route("/reset_status", methods=["POST"])
+def reset_status():
+    """Reset all status data"""
+    try:
+        # Clear status.json
+        save_status({})
+        
+        return jsonify({
+            "success": True,
+            "message": "Status has been reset successfully"
+        })
+        
+    except Exception as e:
+        return jsonify({"error": f"Failed to reset status: {str(e)}"}), 500
+
 # ---------------- RUN ---------------- #
 
 if __name__ == "__main__":

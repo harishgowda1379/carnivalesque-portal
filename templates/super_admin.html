@@ -285,6 +285,57 @@
             transform: translateY(0);
         }
 
+        /* Admin Options */
+        .admin-option {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .admin-option h4 {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--neon-gold);
+            margin-bottom: 10px;
+        }
+
+        .admin-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 20px 0;
+        }
+
+        .admin-btn {
+            padding: 10px 20px;
+            background: rgba(255, 204, 0, 0.1);
+            border: 1px solid rgba(255, 204, 0, 0.3);
+            color: var(--neon-gold);
+            font-family: 'Raleway', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0;
+        }
+
+        .admin-btn:hover {
+            background: rgba(255, 204, 0, 0.2);
+            border-color: var(--neon-gold);
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .admin-btn:active {
+            transform: translateY(0);
+        }
+
         /* Floating Back Button */
         .floating-back-btn {
             position: fixed;
@@ -338,6 +389,40 @@
             <h3>🏆 Overall Champion</h3>
             <button onclick="calculateChampion()" id="championBtn">Calculate Champion</button>
             <div id="championResults"></div>
+        </div>
+
+        <!-- Admin Options -->
+        <div class="card">
+            <h3>⚙️ Admin Options</h3>
+            
+            <!-- Excel File Change -->
+            <div class="admin-option">
+                <h4>Change Excel File</h4>
+                <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; margin-bottom: 15px;">
+                    Upload a new Excel file to replace the current registration data
+                </p>
+                <input type="file" id="excelFile" accept=".xlsx,.xls" style="display: none;">
+                <button onclick="document.getElementById('excelFile').click()" class="admin-btn">
+                    📁 Choose Excel File
+                </button>
+                <button onclick="uploadExcel()" id="uploadExcelBtn" class="admin-btn" style="display: none; margin-left: 10px;">
+                    ⬆️ Upload File
+                </button>
+                <div id="excelFileName" style="margin-top: 10px; font-size: 12px; color: rgba(255, 255, 255, 0.5);"></div>
+            </div>
+
+            <div class="admin-divider"></div>
+
+            <!-- Status Reset -->
+            <div class="admin-option">
+                <h4>Reset Status</h4>
+                <p style="color: rgba(255, 255, 255, 0.6); font-size: 12px; margin-bottom: 15px;">
+                    Reset all status data (reported entries, event status, winners, etc.)
+                </p>
+                <button onclick="resetStatus()" class="reset-btn">
+                    🔄 Reset Status.json
+                </button>
+            </div>
         </div>
     </div>
 
@@ -518,6 +603,123 @@
             .catch(error => {
                 console.error("Error resetting winners:", error);
                 alert("Error resetting winners. Please try again.");
+            });
+        }
+
+        // Excel file handling
+        document.getElementById('excelFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const fileNameDiv = document.getElementById('excelFileName');
+            const uploadBtn = document.getElementById('uploadExcelBtn');
+            
+            if (file) {
+                fileNameDiv.textContent = `Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                uploadBtn.style.display = 'inline-block';
+            } else {
+                fileNameDiv.textContent = '';
+                uploadBtn.style.display = 'none';
+            }
+        });
+
+        function uploadExcel() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select an Excel file first');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to replace the current Excel file with "${file.name}"? This will overwrite all registration data.`)) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('excel_file', file);
+
+            const uploadBtn = document.getElementById('uploadExcelBtn');
+            const originalText = uploadBtn.textContent;
+            uploadBtn.textContent = 'UPLOADING...';
+            uploadBtn.disabled = true;
+
+            fetch('/upload_excel', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                uploadBtn.textContent = originalText;
+                uploadBtn.disabled = false;
+                
+                if (data.success) {
+                    alert('Excel file uploaded successfully! The system will now use the new data.');
+                    // Reset file input
+                    fileInput.value = '';
+                    document.getElementById('excelFileName').textContent = '';
+                    uploadBtn.style.display = 'none';
+                    // Refresh dashboard to show new data
+                    loadDashboard();
+                } else {
+                    alert(`Error uploading Excel file: ${data.error || 'Unknown error'}`);
+                }
+            })
+            .catch(error => {
+                uploadBtn.textContent = originalText;
+                uploadBtn.disabled = false;
+                console.error('Error uploading Excel:', error);
+                alert('Error uploading Excel file. Please try again.');
+            });
+        }
+
+        function resetStatus() {
+            if (!confirm('Are you sure you want to reset ALL status data? This will:\n\n• Clear all reported entries\n• Reset event status (started/ended)\n• Remove all winners\n• Clear team overrides\n• Reset college edits\n\nThis action cannot be undone!')) {
+                return;
+            }
+
+            // Double confirmation
+            if (!confirm('This is a critical action. Type "RESET" to confirm.\n\nType RESET in the next prompt to proceed.')) {
+                return;
+            }
+
+            const resetText = prompt('Please type "RESET" to confirm the status reset:');
+            if (resetText !== 'RESET') {
+                alert('Status reset cancelled.');
+                return;
+            }
+
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'RESETTING...';
+            btn.disabled = true;
+
+            fetch('/reset_status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                
+                if (data.success) {
+                    alert('Status has been successfully reset! All reported entries, event status, and winners have been cleared.');
+                    // Refresh dashboard
+                    loadDashboard();
+                } else {
+                    alert(`Error resetting status: ${data.error || 'Unknown error'}`);
+                }
+            })
+            .catch(error => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                console.error('Error resetting status:', error);
+                alert('Error resetting status. Please try again.');
             });
         }
 

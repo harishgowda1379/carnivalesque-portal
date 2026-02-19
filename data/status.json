@@ -8,5 +8,19 @@
         "event_started": true,
         "event_ended": true,
         "position": 1
+    },
+    "C260002": {
+        "event": "Carrom (Men)",
+        "reported": true,
+        "event_started": false,
+        "event_ended": false
+    },
+    "C260003": {
+        "event": "IPL Auction",
+        "team_override": [
+            "Alan",
+            "gowtham",
+            "Shalin"
+        ]
     }
 }
