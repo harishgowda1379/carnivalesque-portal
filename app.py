@@ -1714,6 +1714,123 @@ def submit_spot_registration():
 
 # ---------------- ADMIN OPTIONS ---------------- #
 
+@app.route("/check_event_start_permission", methods=["POST"])
+@event_verified_required
+def check_event_start_permission():
+    """Check if event start is enabled by registration desk"""
+    try:
+        data = request.get_json(silent=True) or {}
+        event = data.get("event")
+        
+        if not event:
+            return jsonify({"error": "Event name required"}), 400
+        
+        # Get current registration from session or status
+        status = load_status()
+        
+        # Find any registration for this event to check permission
+        for reg_no, reg_data in status.items():
+            if reg_data.get("event") == event:
+                is_enabled = reg_data.get("event_started", False)
+                return jsonify({
+                    "success": True,
+                    "enabled": is_enabled
+                })
+        
+        # If no registration found, check if any registration exists for this event
+        df = load_excel()
+        mapping = load_column_map()
+        if mapping and "event" in mapping:
+            event_registrations = df[df[mapping["event"]] == event]
+            if not event_registrations.empty:
+                # Event exists but no one has accessed it yet
+                return jsonify({
+                    "success": True,
+                    "enabled": False  # Default to disabled until registration desk enables it
+                })
+        
+        return jsonify({
+            "success": True,
+            "enabled": False
+        })
+        
+    except Exception as e:
+        return jsonify({"error": f"Failed to check permission: {str(e)}"}), 500
+
+@app.route("/reset_all_events", methods=["POST"])
+@role_required("admin")
+def reset_all_events():
+    """Reset all events - admin only"""
+    try:
+        status = load_status()
+        
+        # Clear all event-related data
+        for reg_no in list(status.keys()):
+            if "event" in status[reg_no]:
+                del status[reg_no]["event"]
+            if "event_started" in status[reg_no]:
+                del status[reg_no]["event_started"]
+            if "event_ended" in status[reg_no]:
+                del status[reg_no]["event_ended"]
+            if "position" in status[reg_no]:
+                del status[reg_no]["position"]
+        
+        save_status(status)
+        
+        return jsonify({
+            "success": True,
+            "message": "All events have been reset successfully"
+        })
+        
+    except Exception as e:
+        return jsonify({"error": f"Failed to reset all events: {str(e)}"}), 500
+
+@app.route("/toggle_event_start", methods=["POST"])
+@role_required("admin")
+def toggle_event_start():
+    """Toggle event start status for coordinator"""
+    try:
+        data = request.get_json(silent=True) or {}
+        event = data.get("event")
+        enable = data.get("enable", False)
+        
+        if not event:
+            return jsonify({"error": "Event name required"}), 400
+        
+        status = load_status()
+        
+        # Find all registrations for this event
+        df = load_excel()
+        mapping = load_column_map()
+        if not mapping or "event" not in mapping:
+            return jsonify({"error": "Column mapping not configured"}), 400
+        
+        event_registrations = df[df[mapping["event"]] == event]
+        if event_registrations.empty:
+            return jsonify({"error": "No registrations found for this event"}), 400
+        
+        # Get registration numbers for this event
+        reg_numbers = event_registrations[mapping["reg_no"]].tolist()
+        
+        # Update status for all registrations of this event
+        for reg_no in reg_numbers:
+            if reg_no not in status:
+                status[reg_no] = {}
+            status[reg_no]["event"] = event
+            # Only enable the event for coordinator, don't mark as started
+            status[reg_no]["event_started"] = enable
+        
+        save_status(status)
+        
+        action = "enabled" if enable else "disabled"
+        return jsonify({
+            "success": True,
+            "message": f"Event start {action} for {event}"
+        })
+        
+    except Exception as e:
+        return jsonify({"error": f"Failed to toggle event start: {str(e)}"}), 500
+
 @app.route("/upload_excel", methods=["POST"])
 def upload_excel():
     """Upload and replace the Excel file"""

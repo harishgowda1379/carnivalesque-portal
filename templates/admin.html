@@ -408,6 +408,103 @@
             transform: translateY(0);
         }
 
+        /* Event Management */
+        .event-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .event-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(53, 218, 136, 0.3);
+        }
+
+        .event-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .event-status {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 4px;
+        }
+
+        .event-enabled {
+            color: #00ff88;
+        }
+
+        .event-disabled {
+            color: #ff6b6b;
+        }
+
+        .enable-btn {
+            padding: 8px 16px;
+            background: rgba(53, 218, 136, 0.1);
+            border: 1px solid rgba(53, 218, 136, 0.3);
+            color: var(--neon-purple);
+            font-family: 'Raleway', sans-serif;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .enable-btn:hover {
+            background: rgba(53, 218, 136, 0.2);
+            border-color: var(--neon-purple);
+            box-shadow: 0 0 15px rgba(53, 218, 136, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .enable-btn:active {
+            transform: translateY(0);
+        }
+
+        .enable-btn.enabled {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+
+        .reset-all-btn {
+            padding: 12px 24px;
+            background: rgba(255, 75, 75, 0.1);
+            border: 1px solid rgba(255, 75, 75, 0.5);
+            color: #ff4b4b;
+            font-family: 'Raleway', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .reset-all-btn:hover {
+            background: rgba(255, 75, 75, 0.2);
+            border-color: #ff4b4b;
+            box-shadow: 0 0 15px rgba(255, 75, 75, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .reset-all-btn:active {
+            transform: translateY(0);
+        }
+
     </style>
 </head>
 <a href="/login" class="floating-back-btn">←</a>
@@ -466,6 +563,15 @@
             </div>
             <button onclick="saveEventCodes()" id="saveCodesBtn" style="margin-top: 20px;">Save Event Codes</button>
             <div id="codesSuccess"></div>
+        </div>
+
+        <!-- Event Management -->
+        <div class="card">
+            <h3>🎯 Event Management</h3>
+            <div id="eventManagementContainer" style="max-height: 400px; overflow-y: auto;">
+                <div class="loading">Loading Events...</div>
+            </div>
+            <button onclick="resetAllEvents()" id="resetAllBtn" style="margin-top: 20px; background: rgba(255, 75, 75, 0.1); border: 1px solid rgba(255, 75, 75, 0.5); color: #ff4b4b;">Reset All Events</button>
         </div>
 
         <div class="card">
@@ -641,6 +747,7 @@
 
         // Load event codes on page load
         loadEventCodes();
+        loadEventManagement();
 
         function loadEventCodes() {
             fetch("/get_events")
@@ -680,6 +787,144 @@
                 });
         }
 
+        function loadEventManagement() {
+            fetch("/get_events")
+                .then(res => res.json())
+                .then(events => {
+                    const container = document.getElementById("eventManagementContainer");
+                    container.innerHTML = "";
+                    
+                    if (!events || events.length === 0) {
+                        container.innerHTML = '<div class="loading">No events found</div>';
+                        return;
+                    }
+
+                    // Fetch event status for each event
+                    fetch("/super_admin_dashboard")
+                        .then(res => res.json())
+                        .then(eventStatus => {
+                            // Separate enabled and disabled events
+                            const enabledEvents = [];
+                            const disabledEvents = [];
+                            
+                            events.forEach(event => {
+                                const status = eventStatus[event] || {};
+                                const isEnabled = status.event_started || false;
+                                
+                                if (isEnabled) {
+                                    enabledEvents.push(event);
+                                } else {
+                                    disabledEvents.push(event);
+                                }
+                            });
+                            
+                            // Display enabled events first (at top)
+                            enabledEvents.forEach(event => {
+                                const status = eventStatus[event] || {};
+                                const isEnabled = true;
+                                
+                                const row = document.createElement("div");
+                                row.className = "event-item";
+                                row.innerHTML = `
+                                    <div>
+                                        <div class="event-name">${event}</div>
+                                        <div class="event-status event-enabled">
+                                            Event Started - Enabled
+                                        </div>
+                                    </div>
+                                    <button class="enable-btn enabled" 
+                                            onclick="toggleEventStart('${event}', ${!isEnabled})"
+                                            disabled>
+                                        enabled
+                                    </button>
+                                `;
+                                container.appendChild(row);
+                            });
+                            
+                            // Then display disabled events
+                            disabledEvents.forEach(event => {
+                                const status = eventStatus[event] || {};
+                                const isEnabled = false;
+                                
+                                const row = document.createElement("div");
+                                row.className = "event-item";
+                                row.innerHTML = `
+                                    <div>
+                                        <div class="event-name">${event}</div>
+                                        <div class="event-status event-disabled">
+                                            Event Not Started - Disabled
+                                        </div>
+                                    </div>
+                                    <button class="enable-btn" 
+                                            onclick="toggleEventStart('${event}', ${!isEnabled})">
+                                        Enable Mark Event Started
+                                    </button>
+                                `;
+                                container.appendChild(row);
+                            });
+                        })
+                        .catch(err => {
+                            console.error("Error loading event status:", err);
+                            events.forEach(event => {
+                                const row = document.createElement("div");
+                                row.className = "event-item";
+                                row.innerHTML = `
+                                    <div>
+                                        <div class="event-name">${event}</div>
+                                        <div class="event-status event-disabled">Status Unknown</div>
+                                    </div>
+                                    <button class="enable-btn" onclick="toggleEventStart('${event}', true)">
+                                        Enable Mark Event Started
+                                    </button>
+                                `;
+                                container.appendChild(row);
+                            });
+                        });
+                })
+                .catch(err => {
+                    console.error("Error loading events:", err);
+                    document.getElementById("eventManagementContainer").innerHTML = '<div class="loading">Error loading events</div>';
+                });
+        }
+
+        function toggleEventStart(eventName, enable) {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = enable ? "ENABLING..." : "DISABLING...";
+            btn.disabled = true;
+
+            fetch("/toggle_event_start", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ event: eventName, enable: enable })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                
+                if (data.success) {
+                    // Show success message
+                    const action = enable ? 'enabled' : 'disabled';
+                    alert(`Event "${eventName}" has been ${action} successfully!`);
+                    
+                    // Update the event status in the dashboard immediately
+                    loadEventManagement();
+                } else {
+                    alert(`Error: ${data.error || 'Failed to toggle event start'}`);
+                }
+            })
+            .catch(err => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                console.error("Toggle error:", err);
+                alert("Error toggling event start. Please try again.");
+            });
+        }
+
         function saveEventCodes() {
             const inputs = document.querySelectorAll(".event-code-input");
             const codes = {};
@@ -717,6 +962,54 @@
                 btn.disabled = false;
                 document.getElementById("codesSuccess").innerText = "Error saving codes!";
                 document.getElementById("codesSuccess").style.display = "block";
+            });
+        }
+
+        function resetAllEvents() {
+            if (!confirm("Are you sure you want to reset ALL events? This will:\n\n• Disable event start for ALL events\n• Clear all event status (started/ended)\n• Remove all winners\n• Reset all coordinator access\n\nThis action cannot be undone!")) {
+                return;
+            }
+
+            if (!confirm("This is a critical action. Type 'RESET' to confirm.\n\nType RESET in the next prompt to proceed.")) {
+                return;
+            }
+
+            const resetText = prompt("Please type 'RESET' to confirm the reset:");
+            if (resetText !== 'RESET') {
+                alert('Reset cancelled.');
+                return;
+            }
+
+            const btn = document.getElementById("resetAllBtn");
+            const originalText = btn.textContent;
+            btn.textContent = "RESETTING...";
+            btn.disabled = true;
+
+            fetch("/reset_all_events", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                
+                if (data.success) {
+                    alert("All events have been reset successfully!");
+                    // Refresh the event management display
+                    loadEventManagement();
+                } else {
+                    alert(`Error: ${data.error || 'Failed to reset all events'}`);
+                }
+            })
+            .catch(err => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                console.error("Reset error:", err);
+                alert("Error resetting events. Please try again.");
             });
         }
 

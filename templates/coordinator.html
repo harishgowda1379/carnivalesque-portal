@@ -571,17 +571,39 @@
     }
 
     function startEvent() {
-        fetch("/start_event", {
+        // First check if event is enabled by admin
+        fetch("/check_event_start_permission", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
             body: JSON.stringify({ event: currentEvent })
-        }).then(() => {
-            eventStarted = true;
-            showCustomPopup("marked has event started");
-            document.getElementById("winnersCard").classList.remove("hidden");
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.enabled) {
+                // Event is enabled, proceed with starting
+                fetch("/start_event", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ event: currentEvent })
+                }).then(() => {
+                    eventStarted = true;
+                    showCustomPopup("marked has event started");
+                    document.getElementById("winnersCard").classList.remove("hidden");
+                });
+            } else {
+                // Event is not enabled by registration desk
+                showCustomPopup("The event cant be started yet. It will be enabled by the registration desk once all registrations, including spot registrations, are completed. Please wait until they enable it.");
+            }
+        })
+        .catch(err => {
+            console.error("Error checking permission:", err);
+            showCustomPopup("Error checking event permission. Please try again.");
         });
     }
 
