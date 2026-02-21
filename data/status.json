@@ -1,6 +1,9 @@
 {
     "C260001": {
-        "reported": true
+        "reported": true,
+        "event": "FC26 EA SPORTS",
+        "event_started": false,
+        "event_ended": false
     },
     "C260174": {},
     "C260133": {},

@@ -15,6 +15,11 @@ from functools import wraps
 import qrcode
 from io import BytesIO
 from datetime import datetime, timedelta
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.lib.units import inch
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)
@@ -1279,7 +1284,207 @@ def end_event():
 
 
 # --------------------------------------------------
-# 🔄 RESET WINNERS (SUPER ADMIN ONLY)
+# � DOWNLOAD EVENT PARTICIPANTS PDF (PROTECTED)
+# --------------------------------------------------
+@event_verified_required
+@app.route("/download_event_pdf", methods=["POST"])
+def download_event_pdf():
+    data = request.get_json(silent=True) or {}
+    event = data.get("event")
+    
+    if not event:
+        return jsonify({"error": "Event name required"}), 400
+    
+    # Get the same data as get_reported_teams
+    df = load_excel()
+    mapping = load_column_map()
+    status = load_status()
+    
+    result = []
+    
+    for reg_no, info in status.items():
+        if info.get("reported") and info.get("event") == event:
+            row = df[df[mapping["reg_no"]] == reg_no]
+            if row.empty:
+                continue
+            
+            team = get_team_for_reg(reg_no, row.iloc[0], mapping, status)
+            
+            college = ""
+            if mapping.get("college") and mapping["college"] in df.columns:
+                college = str(row.iloc[0][mapping["college"]])
+            
+            contact = ""
+            row_data = row.iloc[0]
+            
+            if mapping.get("contact"):
+                contact_col = mapping["contact"]
+                if contact_col in df.columns:
+                    val = row_data[contact_col]
+                    if pd.notna(val):
+                        contact = str(val).strip()
+                else:
+                    for col in df.columns:
+                        if col.strip().lower() == contact_col.strip().lower():
+                            val = row_data[col]
+                            if pd.notna(val):
+                                contact = str(val).strip()
+                            break
+            
+            result.append({
+                "reg_no": reg_no,
+                "team": team,
+                "team_size": len(team),
+                "college": college,
+                "contact": contact
+            })
+    
+    # Generate PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    styles = getSampleStyleSheet()
+    
+    # Custom styles
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=20,
+        spaceAfter=30,
+        alignment=1,  # Center alignment
+        textColor=colors.darkblue
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=14,
+        spaceAfter=12,
+        textColor=colors.darkblue
+    )
+    
+    content = []
+    
+    # College Logo Placeholder (Centered)
+    try:
+        # Try to load college logo - replace 'static/images/college_logo.png' with your actual logo path
+        logo_path = os.path.join(BASE_DIR, "static", "images", "college_logo.png")
+        if os.path.exists(logo_path):
+            logo = Image(logo_path, width=4*inch, height=3*inch)
+            content.append(logo)
+        else:
+            # Create a placeholder box if logo doesn't exist
+            content.append(Paragraph("◈ COLLEGE LOGO ◈<br/><font size=8>(Replace with actual logo: static/images/college_logo.png)</font>", 
+                                    ParagraphStyle('LogoPlaceholder', 
+                                                  parent=styles['Normal'],
+                                                  alignment=1,  # Center
+                                                  fontSize=12,
+                                                  textColor=colors.grey,
+                                                  spaceAfter=20)))
+    except:
+        # Fallback placeholder
+        content.append(Paragraph("◈ COLLEGE LOGO ◈", 
+                                ParagraphStyle('LogoPlaceholder', 
+                                              parent=styles['Normal'],
+                                              alignment=1,  # Center
+                                              fontSize=14,
+                                              textColor=colors.grey,
+                                              spaceAfter=20)))
+    
+    content.append(Spacer(1, 10))
+    
+    # Title
+    content.append(Paragraph(f"CARNIVALESQUE 26 - Event Participants Report", title_style))
+    content.append(Paragraph(f"Event: {event}", heading_style))
+    content.append(Paragraph(f"Generated on: {datetime.now().strftime('%d-%m-%Y %H:%M:%S')}", styles['Normal']))
+    content.append(Spacer(1, 20))
+    
+    # Summary
+    content.append(Paragraph(f"Total Teams: {len(result)}", heading_style))
+    content.append(Spacer(1, 15))
+    
+    if result:
+        # Table data with proper text wrapping
+        table_data = [["Reg No", "Team Members", "Team Size", "College", "Contact"]]
+        
+        for team_data in result:
+            # Split team members into multiple lines if too long
+            team_members = team_data["team"]
+            team_members_text = ""
+            if len(team_members) > 0:
+                # Create a formatted list with line breaks
+                for i, member in enumerate(team_members):
+                    if i == 0:
+                        team_members_text += f"• {member}"
+                    else:
+                        team_members_text += f"\n• {member}"
+            
+            # Truncate college name if too long
+            college_text = team_data["college"] or "N/A"
+            if len(college_text) > 30:
+                college_text = college_text[:27] + "..."
+            
+            table_data.append([
+                team_data["reg_no"],
+                team_members_text,
+                str(team_data["team_size"]),
+                college_text,
+                team_data["contact"] or "N/A"
+            ])
+        
+        # Create table with adjusted column widths
+        table = Table(table_data, colWidths=[0.8*inch, 3.5*inch, 0.7*inch, 2*inch, 1.2*inch])
+        
+        # Style the table
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 6),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ]))
+        
+        # Special alignment for specific columns
+        table.setStyle(TableStyle([
+            ('ALIGN', (1, 1), (1, -1), 'LEFT'),  # Team Members - left aligned
+            ('ALIGN', (3, 1), (4, -1), 'LEFT'),  # College and Contact - left aligned
+        ]))
+        
+        # Alternate row colors
+        for i in range(1, len(table_data)):
+            if i % 2 == 0:
+                table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, i), (-1, i), colors.lightgrey)
+                ]))
+        
+        content.append(table)
+    else:
+        content.append(Paragraph("No participants reported for this event.", styles['Normal']))
+    
+    doc.build(content)
+    buffer.seek(0)
+    
+    # Create filename
+    filename = f"carnivalesque_{event.lower().replace(' ', '_')}_participants_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=filename,
+        mimetype='application/pdf'
+    )
+
+
+# --------------------------------------------------
+# �� RESET WINNERS (SUPER ADMIN ONLY)
 # --------------------------------------------------
 @app.route("/reset_winners", methods=["POST"])
 @role_required("super_admin")

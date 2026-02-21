@@ -365,6 +365,10 @@
             <div style="padding: 20px; opacity: 0.5;">No telemetry data received...</div>
         </div>
 
+        <button onclick="downloadPDF()" id="downloadPDFBtn" style="border-color: var(--neon-gold); color: var(--neon-gold); margin-top: 20px;">
+            📄 Download PDF Report
+        </button>
+
         <button onclick="startEvent()" id="startBtn" style="border-color: var(--neon-blue); color: var(--neon-blue); margin-top: 30px;">
             Mark as event start
         </button>
@@ -548,6 +552,50 @@
         }
     }
 
+    function downloadPDF() {
+        const btn = document.getElementById("downloadPDFBtn");
+        const originalText = btn.innerText;
+        btn.innerText = "GENERATING PDF...";
+        btn.disabled = true;
+
+        fetch("/download_event_pdf", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ event: currentEvent })
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.blob();
+            } else {
+                throw new Error('PDF generation failed');
+            }
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `carnivalesque_${currentEvent.toLowerCase().replace(' ', '_')}_participants.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            showCustomPopup("PDF downloaded successfully!");
+        })
+        .catch(error => {
+            console.error('Error downloading PDF:', error);
+            showCustomPopup("Error generating PDF. Please try again.");
+        })
+        .finally(() => {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        });
+    }
+
     function updateWinnerDropdowns() {
         const ids = ["firstPlace", "secondPlace", "thirdPlace"];
         const keys = ["first", "second", "third"];
@@ -598,7 +646,7 @@
                 });
             } else {
                 // Event is not enabled by registration desk
-                showCustomPopup("The event cant be started yet. It will be enabled by the registration desk once all registrations, including spot registrations, are completed. Please wait until they enable it.");
+                showCustomPopup("The event cant be started  yet. It will be enabled by the registration desk once all registrations, including spot registrations, are completed. Please wait until they enable it.");
             }
         })
         .catch(err => {
