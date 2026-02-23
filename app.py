@@ -47,11 +47,11 @@ EVENT_RATINGS_PATH = os.path.join(BASE_DIR, "data", "event_ratings.json")
 
 # Secure hashed passwords using bcrypt
 USERS = {
-    "register": {"password_hash": bcrypt.hashpw(b"reg123", bcrypt.gensalt()).decode(), "role": "register"},
+    "register": {"password_hash": bcrypt.hashpw(b"carnireg", bcrypt.gensalt()).decode(), "role": "register"},
     "coordinator": {"password_hash": bcrypt.hashpw(b"coord123", bcrypt.gensalt()).decode(), "role": "coordinator"},
-    "certificate": {"password_hash": bcrypt.hashpw(b"cert123", bcrypt.gensalt()).decode(), "role": "certificate"},
-    "admin": {"password_hash": bcrypt.hashpw(b"admin123", bcrypt.gensalt()).decode(), "role": "admin"},
-    "superadmin": {"password_hash": bcrypt.hashpw(b"super123", bcrypt.gensalt()).decode(), "role": "super_admin"}
+    "certificate": {"password_hash": bcrypt.hashpw(b"cert-26", bcrypt.gensalt()).decode(), "role": "certificate"},
+    "admin": {"password_hash": bcrypt.hashpw(b"hari2007.", bcrypt.gensalt()).decode(), "role": "admin"},
+    "superadmin": {"password_hash": bcrypt.hashpw(b"marenox-26", bcrypt.gensalt()).decode(), "role": "super_admin"}
 }
 
 # Event Team Requirements (Min/Max team members)
