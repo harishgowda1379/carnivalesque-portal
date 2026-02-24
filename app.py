@@ -272,6 +272,33 @@ def invalidate_cache():
     _status_cache = None
     print("DEBUG: Cache invalidated")
 
+def save_status(data):
+    """Save status data to JSON file with proper error handling"""
+    try:
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(STATUS_PATH), exist_ok=True)
+        
+        # Save with file locking
+        with portalocker.Lock(STATUS_PATH, 'w', timeout=10) as f:
+            json.dump(data, f, indent=4)
+            
+        print(f"Successfully saved status data to {STATUS_PATH}")
+        
+    except portalocker.exceptions.LockException as e:
+        print(f"Lock error saving status: {e}")
+        raise Exception(f"File is locked: {str(e)}")
+    except PermissionError as e:
+        print(f"Permission error saving status: {e}")
+        raise Exception(f"Permission denied: {str(e)}")
+    except Exception as e:
+        print(f"Unexpected error saving status: {e}")
+        import traceback
+        traceback.print_exc()
+        raise Exception(f"Failed to save status: {str(e)}")
+    
+    # Invalidate cache when status is updated
+    invalidate_cache()
+
 def save_column_map(data):
     os.makedirs(os.path.dirname(COLUMN_MAP_PATH), exist_ok=True)
     with portalocker.Lock(COLUMN_MAP_PATH, 'w') as f:
