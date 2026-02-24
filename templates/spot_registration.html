@@ -869,11 +869,20 @@
             const memberDiv = document.createElement("div");
             memberDiv.className = "team-member-input";
             memberDiv.style.display = "block";
+            memberDiv.style.visibility = "visible";
+            memberDiv.style.opacity = "1";
             memberDiv.style.marginBottom = "15px";
+            memberDiv.style.position = "relative";
+            memberDiv.style.zIndex = "1";
             
             const label = document.createElement("label");
             label.className = "team-member-label";
             label.style.display = "block";
+            label.style.color = "rgba(255, 255, 255, 0.8)";
+            label.style.marginBottom = "5px";
+            label.style.fontSize = "14px";
+            label.style.fontWeight = "500";
+            
             if (max === 1) {
                 label.textContent = `Participant Name *`;
             } else if (i === 1) {
@@ -889,7 +898,8 @@
             input.name = `team_member_${i}`;
             input.id = `team_member_${i}`;
             input.setAttribute('autocomplete', 'name');
-            input.className = "form-input"; // Use same class as other inputs
+            input.className = "form-input";
+            
             if (max === 1) {
                 input.placeholder = `Enter Your Name`;
             } else {
@@ -899,25 +909,84 @@
                 input.required = true;
             }
             
-            // Ensure inputs are visible and accessible on mobile
-            input.style.display = "block";
-            input.style.width = "100%";
-            input.style.opacity = "1";
-            input.style.visibility = "visible";
-            input.style.padding = "20px";
-            input.style.background = "rgba(0, 0, 0, 0.4)";
-            input.style.border = "1px solid rgba(255, 255, 255, 0.1)";
-            input.style.color = "#fff";
-            input.style.fontSize = "16px";
+            // CRITICAL: Ensure inputs are visible and accessible on ALL devices
+            input.style.cssText = `
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                width: 100% !important;
+                height: auto !important;
+                padding: 15px !important;
+                background: rgba(0, 0, 0, 0.4) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                color: #fff !important;
+                font-size: 16px !important;
+                border-radius: 8px !important;
+                box-sizing: border-box !important;
+                -webkit-appearance: none !important;
+                -webkit-tap-highlight-color: transparent !important;
+                position: relative !important;
+                z-index: 10 !important;
+                pointer-events: auto !important;
+                cursor: text !important;
+            `;
+            
+            // Add mobile-specific event listeners
+            input.addEventListener('focus', function() {
+                this.style.borderColor = "rgba(255, 255, 255, 0.3) !important";
+                this.style.outline = "none";
+                console.log(`Team member ${i} input focused`);
+            });
+            
+            input.addEventListener('blur', function() {
+                this.style.borderColor = "rgba(255, 255, 255, 0.1) !important";
+                console.log(`Team member ${i} input blurred with value: "${this.value}"`);
+            });
+            
+            input.addEventListener('input', function() {
+                console.log(`Team member ${i} input changed: "${this.value}"`);
+            });
+            
+            // Add click event to ensure focus on mobile
+            input.addEventListener('click', function() {
+                this.focus();
+            });
 
             memberDiv.appendChild(label);
             memberDiv.appendChild(input);
             teamMembersContainer.appendChild(memberDiv);
             
-            console.log(`Created team member field ${i}`);
+            console.log(`Created team member field ${i} with id: team_member_${i}`);
         }
         
         console.log(`Total team member fields created: ${teamMembersContainer.children.length}`);
+        
+        // DEBUG: Verify all inputs are accessible
+        setTimeout(() => {
+            const allInputs = document.querySelectorAll('[id^="team_member_"]');
+            console.log(`DEBUG: Found ${allInputs.length} team member inputs after creation`);
+            allInputs.forEach((input, index) => {
+                const rect = input.getBoundingClientRect();
+                console.log(`DEBUG: Input ${index + 1} (${input.id}):`, {
+                    visible: rect.width > 0 && rect.height > 0,
+                    width: rect.width,
+                    height: rect.height,
+                    display: window.getComputedStyle(input).display,
+                    opacity: window.getComputedStyle(input).opacity,
+                    zIndex: window.getComputedStyle(input).zIndex,
+                    pointerEvents: window.getComputedStyle(input).pointerEvents
+                });
+                
+                // Test if input can be focused
+                try {
+                    input.focus();
+                    console.log(`DEBUG: Input ${index + 1} can be focused`);
+                    input.blur();
+                } catch (e) {
+                    console.error(`DEBUG: Input ${index + 1} cannot be focused:`, e);
+                }
+            });
+        }, 100);
         
         // Scroll to team members section on mobile after a short delay
         setTimeout(() => {
@@ -1003,14 +1072,20 @@
             // Backend will handle the mapping correctly
         }
 
-        // Collect team members
+        // Collect team members with better debugging
         const teamMemberInputs = document.querySelectorAll('[id^="team_member_"]');
-        teamMemberInputs.forEach(input => {
+        console.log(`Found ${teamMemberInputs.length} team member inputs`);
+        
+        teamMemberInputs.forEach((input, index) => {
             const value = input.value.trim();
+            console.log(`Team member ${index + 1}: "${value}" (input id: ${input.id})`);
             if (value) {
                 formData.team_members.push(value);
             }
         });
+        
+        console.log(`Final team members array: [${formData.team_members.join(', ')}]`);
+        console.log(`Team members count: ${formData.team_members.length}`);
 
         // Validation with better error messages
         if (!formData.event) {
@@ -1103,6 +1178,8 @@
         }
 
         console.log("ABOUT TO SUBMIT - All validations passed!");
+        console.log("Final form data being submitted:", JSON.stringify(formData, null, 2));
+        
         submitBtn.disabled = true;
         submitBtn.textContent = "SUBMITTING...";
 
@@ -1113,8 +1190,24 @@
             },
             body: JSON.stringify(formData)
         })
-        .then(res => res.json())
+        .then(res => {
+            console.log("Response status:", res.status);
+            if (!res.ok) {
+                // Try to get error details from response
+                return res.text().then(text => {
+                    console.log("Error response text:", text);
+                    try {
+                        const errorData = JSON.parse(text);
+                        throw new Error(errorData.error || `HTTP ${res.status}`);
+                    } catch (e) {
+                        throw new Error(`Registration failed with status ${res.status}`);
+                    }
+                });
+            }
+            return res.json();
+        })
         .then(data => {
+            console.log("Success response:", data);
             if (data.error) {
                 errorDiv.textContent = data.error;
                 errorDiv.style.display = "block";
@@ -1135,9 +1228,26 @@
             }
         })
         .catch(err => {
-            console.error("Error:", err);
+            console.error("Registration error:", err);
             console.error("Full error details:", err);
-            errorDiv.textContent = "Registration failed. Please try again.";
+            
+            // Show specific error message
+            let errorMessage = "Registration failed. Please try again.";
+            if (err.message) {
+                if (err.message.includes("429")) {
+                    errorMessage = "Too many requests. Please wait a moment and try again.";
+                } else if (err.message.includes("500")) {
+                    errorMessage = "Server error. Please try again in a few moments.";
+                } else if (err.message.includes("400")) {
+                    errorMessage = "Invalid data. Please check all fields and try again.";
+                } else if (err.message.includes("403")) {
+                    errorMessage = "Access denied. Please refresh the page and try again.";
+                } else {
+                    errorMessage = err.message;
+                }
+            }
+            
+            errorDiv.textContent = errorMessage;
             errorDiv.style.display = "block";
             submitBtn.disabled = false;
             submitBtn.textContent = "Submit Registration";
