@@ -44,6 +44,7 @@ COLUMN_MAP_PATH = os.path.join(BASE_DIR, "data", "column_map.json")
 STATUS_PATH = os.path.join(BASE_DIR, "data", "status.json")
 EVENT_CODES_PATH = os.path.join(BASE_DIR, "data", "event_codes.json")
 EVENT_RATINGS_PATH = os.path.join(BASE_DIR, "data", "event_ratings.json")
+EVENT_REQUESTS_PATH = os.path.join(BASE_DIR, "data", "event_requests.json")
 
 # Secure hashed passwords using bcrypt
 USERS = {
@@ -294,15 +295,182 @@ def save_event_codes(data):
         traceback.print_exc()
         raise Exception(f"Failed to save event codes: {str(e)}")
 
-def load_event_ratings():
-    if not os.path.exists(EVENT_RATINGS_PATH):
+def load_event_requests():
+    """Load event start requests from JSON file"""
+    if not os.path.exists(EVENT_REQUESTS_PATH):
         return {}
     try:
-        with open(EVENT_RATINGS_PATH, "r") as f:
+        with open(EVENT_REQUESTS_PATH, "r") as f:
             content = f.read().strip()
             return json.loads(content) if content else {}
     except json.JSONDecodeError:
         return {}
+
+def save_event_requests(data):
+    """Save event start requests to JSON file with proper error handling"""
+    try:
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(EVENT_REQUESTS_PATH), exist_ok=True)
+        
+        # Save with file locking
+        with portalocker.Lock(EVENT_REQUESTS_PATH, 'w', timeout=10) as f:
+            json.dump(data, f, indent=4)
+            
+        print(f"Successfully saved event request to {EVENT_REQUESTS_PATH}")
+        
+    except portalocker.exceptions.LockException as e:
+        print(f"Lock error saving event request: {e}")
+        raise Exception(f"File is locked: {str(e)}")
+    except Exception as e:
+        print(f"Error saving event request: {e}")
+        import traceback
+        traceback.print_exc()
+        raise Exception(f"Failed to save event request: {str(e)}")
+
+def send_notification(message, phone_number=None):
+    """Send notification via email-to-SMS gateway with carrier detection"""
+    print(f"NOTIFICATION: {message}")
+    if phone_number:
+        print(f"TO PHONE: {phone_number}")
+    
+    # Email-to-SMS Gateway Implementation
+    try:
+        # Configure email settings
+        smtp_server = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
+        smtp_port = int(os.environ.get('SMTP_PORT', '587'))
+        sender_email = os.environ.get('SENDER_EMAIL', 'carnivalesque26@gmail.com')
+        sender_password = os.environ.get('SENDER_PASSWORD', 'your_app_password')
+        
+        if not sender_email or not sender_password:
+            print("Email credentials not configured. Check environment variables.")
+            return False
+        
+        # Convert phone number to email format with carrier detection
+        recipient_email = None
+        if phone_number:
+            # Remove any non-digit characters and clean the number
+            phone_clean = ''.join(filter(str.isdigit, phone_number))
+            
+            # Enhanced carrier detection with more carriers
+            carrier_gateways = {
+                # Indian carriers (most common)
+                'airtel': f'{phone_clean}@airtelkk.com',
+                'jio': f'{phone_clean}@jio.net', 
+                'vodafone': f'{phone_clean}@vodafone.net',
+                'idea': f'{phone_clean}@ideacellular.net',
+                'bsnl': f'{phone_clean}@bsnl.in',
+                'docomo': f'{phone_clean}@tdsms.co.in',
+                'telenor': f'{phone_clean}@telenorsms.net',
+                'tata': f'{phone_clean}@tatadocom.co.in',
+                
+                # International carriers
+                'att': f'{phone_clean}@txt.att.net',
+                'verizon': f'{phone_clean}@vtext.com',
+                'tmobile': f'{phone_clean}@tmomail.net',
+                'sprint': f'{phone_clean}@messaging.sprintpcs.com',
+                't-mobile': f'{phone_clean}@tmomail.net',
+                'orange': f'{phone_clean}@orange.fr',
+                'o2': f'{phone_clean}@o2imail.co.uk',
+                
+                # General gateways (fallbacks)
+                'txtlocal': f'{phone_clean}@txtlocal.net',
+                'sms-gateway': f'{phone_clean}@sms-gateway.net',
+                'mail2sms': f'{phone_clean}@mail2sms.net'
+            }
+            
+            # Smart carrier detection based on number patterns
+            phone_str = str(phone_clean)
+            
+            # Indian number detection (starts with 6-9)
+            if phone_str.startswith(('6', '7', '8', '9')):
+                if phone_str.startswith('98'):  # Airtel
+                    recipient_email = carrier_gateways['airtel']
+                elif phone_str.startswith('9'):   # Jio
+                    recipient_email = carrier_gateways['jio']
+                elif phone_str.startswith('7'):   # Jio also
+                    recipient_email = carrier_gateways['jio']
+                elif phone_str.startswith('8'):   # Vodafone
+                    recipient_email = carrier_gateways['vodafone']
+                elif phone_str.startswith('6'):   # Airtel
+                    recipient_email = carrier_gateways['airtel']
+                else:
+                    recipient_email = carrier_gateways['txtlocal']  # Fallback
+                    
+            # US number detection
+            elif phone_str.startswith('+1'):
+                if phone_str.startswith('+12'):  # AT&T
+                    recipient_email = carrier_gateways['att']
+                elif phone_str.startswith('+13'):  # T-Mobile
+                    recipient_email = carrier_gateways['t-mobile']
+                elif phone_str.startswith('+14'):  # Sprint
+                    recipient_email = carrier_gateways['sprint']
+                else:
+                    recipient_email = carrier_gateways['txtlocal']  # Fallback
+                    
+            # UK number detection
+            elif phone_str.startswith('+44'):
+                if phone_str.startswith('+447'):  # O2
+                    recipient_email = carrier_gateways['o2']
+                else:
+                    recipient_email = carrier_gateways['txtlocal']  # Fallback
+                    
+            # Default fallback for unknown numbers
+            else:
+                recipient_email = carrier_gateways['txtlocal']
+            
+            print(f"Carrier detected: {recipient_email}")
+            
+        # Send email
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = recipient_email if recipient_email else sender_email
+        msg['Subject'] = f"Carnivalesque 26 Alert"
+        
+        # Add message body with proper formatting
+        body = MIMEText(message, 'plain')
+        msg.attach(body)
+        
+        # Connect and send email with retry logic
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        
+        # Retry logic for better reliability
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                server.login(sender_email, sender_password)
+                text = msg.as_string()
+                server.sendmail(sender_email, recipient_email or sender_email, text)
+                print(f"✅ Email-to-SMS sent successfully (attempt {attempt + 1})")
+                return True
+            except Exception as e:
+                print(f"Attempt {attempt + 1} failed: {e}")
+                if attempt == max_retries - 1:
+                    # Last attempt failed
+                    print(f"❌ All {max_retries} attempts failed. Giving up.")
+                    return False
+                else:
+                    print(f"Retrying in 2 seconds...")
+                    import time
+                    time.sleep(2)
+                    continue
+            finally:
+                try:
+                    server.quit()
+                except:
+                    pass
+                    
+    except Exception as e:
+        print(f"❌ Email-to-SMS service error: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    
+    return True
 
 def save_event_ratings(data):
     with portalocker.Lock(EVENT_RATINGS_PATH, 'w') as f:
@@ -1261,7 +1429,183 @@ def get_reported_teams():
 
 
 # --------------------------------------------------
-# ▶ START EVENT (PROTECTED)
+# 📱 REQUEST EVENT START (COORDINATOR)
+# --------------------------------------------------
+@event_verified_required
+@app.route("/request_event_start", methods=["POST"])
+def request_event_start():
+    """Handle coordinator request to start an event"""
+    try:
+        data = request.get_json(silent=True) or {}
+        event = data.get("event")
+        coordinator_contact = data.get("contact", "")
+        reason = data.get("reason", "Event ready to start")
+        
+        if not event:
+            return jsonify({"error": "Event name is required"}), 400
+        
+        # Load existing requests
+        requests = load_event_requests()
+        
+        # Check if request already exists for this event
+        request_id = f"{event}_{datetime.now().strftime('%Y%m%d')}"
+        if request_id in requests:
+            return jsonify({"error": "Request already sent for this event today"}), 400
+        
+        # Create new request
+        new_request = {
+            "event": event,
+            "coordinator_contact": coordinator_contact,
+            "reason": reason,
+            "requested_at": datetime.now().isoformat(),
+            "status": "pending",  # pending, approved, rejected
+            "approved_by": None,
+            "approved_at": None,
+            "rejection_reason": None
+        }
+        
+        requests[request_id] = new_request
+        save_event_requests(requests)
+        
+        # Send notification to admin phone
+        admin_phone = os.environ.get('ADMIN_PHONE', '+9112345678')  # Set your admin phone number
+        message = f"🚨 EVENT START REQUEST\nEvent: {event}\nCoordinator: {coordinator_contact}\nReason: {reason}\nTime: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        
+        send_notification(message, admin_phone)
+        
+        return jsonify({
+            "success": True,
+            "message": "Request sent successfully! Admin will be notified.",
+            "request_id": request_id
+        })
+        
+    except Exception as e:
+        print(f"Error requesting event start: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "Failed to send request"}), 500
+
+
+# --------------------------------------------------
+# 📱 GET EVENT REQUESTS (ADMIN)
+# --------------------------------------------------
+@role_required("admin", "super_admin")
+@app.route("/get_event_requests")
+def get_event_requests():
+    """Get all event start requests for admin"""
+    try:
+        requests = load_event_requests()
+        return jsonify(requests)
+    except Exception as e:
+        print(f"Error loading event requests: {e}")
+        return jsonify({"error": "Failed to load requests"}), 500
+
+# --------------------------------------------------
+# ✅ APPROVE EVENT REQUEST (ADMIN)
+# --------------------------------------------------
+@role_required("admin", "super_admin")
+@app.route("/approve_event_request", methods=["POST"])
+def approve_event_request():
+    """Approve an event start request"""
+    try:
+        data = request.get_json(silent=True) or {}
+        request_id = data.get("request_id")
+        admin_name = data.get("admin_name", "Admin")
+        
+        if not request_id:
+            return jsonify({"error": "Request ID is required"}), 400
+        
+        requests = load_event_requests()
+        
+        if request_id not in requests:
+            return jsonify({"error": "Request not found"}), 404
+        
+        # Update request
+        requests[request_id]["status"] = "approved"
+        requests[request_id]["approved_by"] = admin_name
+        requests[request_id]["approved_at"] = datetime.now().isoformat()
+        
+        save_event_requests(requests)
+        
+        # Enable the event in status.json
+        status = load_status()
+        event_name = requests[request_id]["event"]
+        
+        # Find all registrations for this event and mark as enabled
+        for reg_no, info in status.items():
+            if info.get("event") == event_name:
+                info["event_enabled"] = True
+        
+        save_status(status)
+        
+        # Send notification to coordinator
+        coordinator_contact = requests[request_id]["coordinator_contact"]
+        message = f"✅ APPROVED!\nEvent: {event_name}\nYour start request has been approved.\nYou can now start the event.\nApproved by: {admin_name}\nTime: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        
+        send_notification(message, coordinator_contact)
+        
+        return jsonify({
+            "success": True,
+            "message": f"Request for {event_name} approved successfully"
+        })
+        
+    except Exception as e:
+        print(f"Error approving request: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "Failed to approve request"}), 500
+
+# --------------------------------------------------
+# ❌ REJECT EVENT REQUEST (ADMIN)
+# --------------------------------------------------
+@role_required("admin", "super_admin")
+@app.route("/reject_event_request", methods=["POST"])
+def reject_event_request():
+    """Reject an event start request"""
+    try:
+        data = request.get_json(silent=True) or {}
+        request_id = data.get("request_id")
+        rejection_reason = data.get("rejection_reason", "")
+        admin_name = data.get("admin_name", "Admin")
+        
+        if not request_id:
+            return jsonify({"error": "Request ID is required"}), 400
+        
+        if not rejection_reason:
+            return jsonify({"error": "Rejection reason is required"}), 400
+        
+        requests = load_event_requests()
+        
+        if request_id not in requests:
+            return jsonify({"error": "Request not found"}), 404
+        
+        # Update request
+        requests[request_id]["status"] = "rejected"
+        requests[request_id]["approved_by"] = admin_name
+        requests[request_id]["approved_at"] = datetime.now().isoformat()
+        requests[request_id]["rejection_reason"] = rejection_reason
+        
+        save_event_requests(requests)
+        
+        # Send notification to coordinator
+        event_name = requests[request_id]["event"]
+        coordinator_contact = requests[request_id]["coordinator_contact"]
+        message = f"❌ REJECTED\nEvent: {event_name}\nYour start request has been rejected.\nReason: {rejection_reason}\nRejected by: {admin_name}\nTime: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        
+        send_notification(message, coordinator_contact)
+        
+        return jsonify({
+            "success": True,
+            "message": f"Request for {event_name} rejected successfully"
+        })
+        
+    except Exception as e:
+        print(f"Error rejecting request: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "Failed to reject request"}), 500
+
+
 # --------------------------------------------------
 @event_verified_required
 @app.route("/start_event", methods=["POST"])

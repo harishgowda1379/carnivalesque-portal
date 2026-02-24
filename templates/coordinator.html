@@ -631,7 +631,7 @@
         .then(res => res.json())
         .then(data => {
             if (data.success && data.enabled) {
-                // Event is enabled, proceed with starting
+                // Event is enabled, proceed with normal start
                 fetch("/start_event", {
                     method: "POST",
                     headers: {
@@ -645,13 +645,108 @@
                     document.getElementById("winnersCard").classList.remove("hidden");
                 });
             } else {
-                // Event is not enabled by registration desk
-                showCustomPopup("The event cant be started  yet. It will be enabled by the registration desk once all registrations, including spot registrations, are completed. Please wait until they enable it.");
+                // Event not enabled, show request modal
+                showRequestModal();
             }
         })
         .catch(err => {
             console.error("Error checking permission:", err);
             showCustomPopup("Error checking event permission. Please try again.");
+        });
+    }
+
+    function showRequestModal() {
+        const modal = document.createElement('div');
+        modal.className = 'custom-popup';
+        modal.style.display = 'block';
+        modal.innerHTML = `
+            <h3>📱 Request Event Start</h3>
+            <p>This event is not enabled by the registration desk. You can request to start it.</p>
+            <div style="margin: 20px 0;">
+                <label style="display: block; margin-bottom: 10px; text-align: left; font-size: 12px;">Your Contact Number:</label>
+                <input type="tel" id="coordinatorContact" placeholder="Enter your phone number" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.8); border: 1px solid var(--neon-purple); color: #fff; margin-bottom: 15px;">
+                
+                <label style="display: block; margin-bottom: 10px; text-align: left; font-size: 12px;">Reason for Request:</label>
+                <textarea id="requestReason" placeholder="Why do you want to start this event?" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.8); border: 1px solid var(--neon-purple); color: #fff; margin-bottom: 15px; min-height: 80px; resize: vertical;"></textarea>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="sendEventStartRequest()" style="flex: 1; border-color: var(--neon-green); color: var(--neon-green);">Send Request</button>
+                <button onclick="closeRequestModal()" style="flex: 1; border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.5);">Cancel</button>
+            </div>
+            <div id="requestError" style="color: #ff4b4b; margin-top: 10px; display: none; font-size: 12px;"></div>
+            <div id="requestSuccess" style="color: var(--neon-green); margin-top: 10px; display: none; font-size: 12px;"></div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Focus on contact input
+        setTimeout(() => {
+            document.getElementById('coordinatorContact').focus();
+        }, 100);
+    }
+
+    function closeRequestModal() {
+        const modal = document.querySelector('.custom-popup');
+        if (modal) {
+            modal.classList.add('popup-fade-out');
+            setTimeout(() => {
+                document.body.removeChild(modal);
+            }, 300);
+        }
+    }
+
+    function sendEventStartRequest() {
+        const contact = document.getElementById('coordinatorContact').value.trim();
+        const reason = document.getElementById('requestReason').value.trim();
+        const errorDiv = document.getElementById('requestError');
+        const successDiv = document.getElementById('requestSuccess');
+        
+        errorDiv.style.display = 'none';
+        successDiv.style.display = 'none';
+        
+        if (!contact) {
+            errorDiv.textContent = 'Please enter your contact number';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        
+        if (!reason) {
+            errorDiv.textContent = 'Please provide a reason for the request';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        
+        // Send request
+        fetch("/request_event_start", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                event: currentEvent,
+                contact: contact,
+                reason: reason
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                successDiv.textContent = data.message;
+                successDiv.style.display = 'block';
+                setTimeout(() => {
+                    closeRequestModal();
+                    showCustomPopup("Request sent successfully! Admin will be notified.");
+                }, 2000);
+            } else {
+                errorDiv.textContent = data.error;
+                errorDiv.style.display = 'block';
+            }
+        })
+        .catch(err => {
+            console.error('Error sending request:', err);
+            errorDiv.textContent = 'Failed to send request. Please try again.';
+            errorDiv.style.display = 'block';
         });
     }
 

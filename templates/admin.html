@@ -574,6 +574,31 @@
             <button onclick="resetAllEvents()" id="resetAllBtn" style="margin-top: 20px; background: rgba(255, 75, 75, 0.1); border: 1px solid rgba(255, 75, 75, 0.5); color: #ff4b4b;">Reset All Events</button>
         </div>
 
+        <!-- Event Start Requests -->
+        <div class="card">
+            <h3>📱 Event Start Requests</h3>
+            <div id="requestsContainer" style="max-height: 400px; overflow-y: auto;">
+                <div class="loading">Loading Requests...</div>
+            </div>
+            <div id="requestActions" style="margin-top: 15px; display: none;">
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; margin-bottom: 5px;">Select Request:</label>
+                    <select id="requestSelect" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.8); border: 1px solid var(--neon-purple); color: #fff;">
+                        <option value="">-- Select Request --</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="approveRequest()" id="approveBtn" style="flex: 1; border-color: var(--neon-green); color: var(--neon-green);">✓ Approve</button>
+                    <button onclick="rejectRequest()" id="rejectBtn" style="flex: 1; border-color: #ff4b4b; color: #ff4b4b;">✗ Reject</button>
+                </div>
+                <div style="margin-top: 10px;">
+                    <label style="display: block; margin-bottom: 5px;">Rejection Reason (if rejecting):</label>
+                    <textarea id="rejectionReason" placeholder="Enter reason for rejection..." style="width: 100%; padding: 10px; background: rgba(0,0,0,0.8); border: 1px solid var(--neon-purple); color: #fff; min-height: 60px; resize: vertical;"></textarea>
+                </div>
+            </div>
+            <div id="requestMessage" style="margin-top: 10px; font-size: 12px; display: none;"></div>
+        </div>
+
         <div class="card">
             <h3>User Password Management</h3>
             <div class="form-group">
@@ -745,9 +770,11 @@
             });
         }
 
-        // Load event codes on page load
+        // Load all data on page load
         loadEventCodes();
         loadEventManagement();
+        loadEventRequests();
+        loadUserManagement();
 
         function loadEventCodes() {
             fetch("/get_events")
@@ -1010,6 +1037,202 @@
                 btn.disabled = false;
                 console.error("Reset error:", err);
                 alert("Error resetting events. Please try again.");
+            });
+        }
+
+        // Event Start Requests Functions
+        let eventRequests = {};
+
+        function loadEventRequests() {
+            fetch("/get_event_requests")
+                .then(res => res.json())
+                .then(data => {
+                    eventRequests = data;
+                    displayEventRequests();
+                })
+                .catch(err => {
+                    console.error("Error loading event requests:", err);
+                    document.getElementById("requestsContainer").innerHTML = '<div style="color: #ff4b4b; padding: 20px;">Error loading requests</div>';
+                });
+        }
+
+        function displayEventRequests() {
+            const container = document.getElementById("requestsContainer");
+            const actionsDiv = document.getElementById("requestActions");
+            
+            if (Object.keys(eventRequests).length === 0) {
+                container.innerHTML = '<div style="padding: 20px; text-align: center; color: rgba(255,255,255,0.5);">No event start requests</div>';
+                actionsDiv.style.display = 'none';
+                return;
+            }
+            
+            let html = '';
+            for (const [requestId, request] of Object.entries(eventRequests)) {
+                const statusColor = request.status === 'pending' ? '#ffa500' : 
+                                 request.status === 'approved' ? '#00ff00' : '#ff4444';
+                const statusText = request.status.toUpperCase();
+                
+                html += `
+                    <div style="border: 1px solid rgba(255,255,255,0.1); padding: 15px; margin-bottom: 10px; border-radius: 4px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <div>
+                                <strong style="color: var(--neon-purple);">${request.event}</strong>
+                                <span style="color: ${statusColor}; font-size: 10px; margin-left: 10px; padding: 2px 8px; border-radius: 3px;">${statusText}</span>
+                            </div>
+                            <div style="font-size: 11px; color: rgba(255,255,255,0.6);">
+                                ${new Date(request.requested_at).toLocaleString()}
+                            </div>
+                        </div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.8);">
+                            <div><strong>Coordinator:</strong> ${request.coordinator_contact}</div>
+                            <div><strong>Reason:</strong> ${request.reason}</div>
+                            ${request.approved_at ? `<div><strong>Approved by:</strong> ${request.approved_by} at ${new Date(request.approved_at).toLocaleString()}</div>` : ''}
+                            ${request.rejection_reason ? `<div><strong>Rejection Reason:</strong> ${request.rejection_reason}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+            
+            // Populate request select dropdown
+            const select = document.getElementById("requestSelect");
+            select.innerHTML = '<option value="">-- Select Request --</option>';
+            for (const [requestId, request] of Object.entries(eventRequests)) {
+                if (request.status === 'pending') {
+                    const option = document.createElement('option');
+                    option.value = requestId;
+                    option.textContent = `${request.event} - ${new Date(request.requested_at).toLocaleDateString()}`;
+                    select.appendChild(option);
+                }
+            }
+            
+            actionsDiv.style.display = Object.keys(eventRequests).some(id => eventRequests[id].status === 'pending') ? 'block' : 'none';
+        }
+
+        function selectRequest() {
+            const select = document.getElementById("requestSelect");
+            const requestId = select.value;
+            
+            if (!requestId) return;
+            
+            const request = eventRequests[requestId];
+            if (!request || request.status !== 'pending') return;
+            
+            // Show request details
+            const messageDiv = document.getElementById("requestMessage");
+            messageDiv.innerHTML = `
+                <div style="padding: 10px; background: rgba(255,255,255,0.05); border-radius: 4px; margin-bottom: 10px;">
+                    <strong>Selected Request:</strong> ${request.event}<br>
+                    <strong>From:</strong> ${request.coordinator_contact}<br>
+                    <strong>Reason:</strong> ${request.reason}<br>
+                    <strong>Time:</strong> ${new Date(request.requested_at).toLocaleString()}
+                </div>
+            `;
+            messageDiv.style.display = 'block';
+        }
+
+        function approveRequest() {
+            const select = document.getElementById("requestSelect");
+            const requestId = select.value;
+            
+            if (!requestId) {
+                alert('Please select a request to approve');
+                return;
+            }
+            
+            if (!confirm('Are you sure you want to approve this request? This will enable the event to start.')) {
+                return;
+            }
+            
+            const btn = document.getElementById("approveBtn");
+            const originalText = btn.textContent;
+            btn.textContent = "APPROVING...";
+            btn.disabled = true;
+            
+            fetch("/approve_event_request", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ request_id: requestId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                
+                if (data.success) {
+                    alert("Request approved successfully! Event can now be started.");
+                    loadEventRequests();
+                    document.getElementById("requestMessage").style.display = 'none';
+                } else {
+                    alert(`Error: ${data.error || 'Failed to approve request'}`);
+                }
+            })
+            .catch(err => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                console.error("Error approving request:", err);
+                alert("Error approving request. Please try again.");
+            });
+        }
+
+        function rejectRequest() {
+            const select = document.getElementById("requestSelect");
+            const requestId = select.value;
+            const reason = document.getElementById("rejectionReason").value.trim();
+            
+            if (!requestId) {
+                alert('Please select a request to reject');
+                return;
+            }
+            
+            if (!reason) {
+                alert('Please provide a reason for rejection');
+                return;
+            }
+            
+            if (!confirm('Are you sure you want to reject this request?')) {
+                return;
+            }
+            
+            const btn = document.getElementById("rejectBtn");
+            const originalText = btn.textContent;
+            btn.textContent = "REJECTING...";
+            btn.disabled = true;
+            
+            fetch("/reject_event_request", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ 
+                    request_id: requestId,
+                    rejection_reason: reason
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                
+                if (data.success) {
+                    alert("Request rejected successfully!");
+                    loadEventRequests();
+                    document.getElementById("requestMessage").style.display = 'none';
+                    document.getElementById("rejectionReason").value = '';
+                } else {
+                    alert(`Error: ${data.error || 'Failed to reject request'}`);
+                }
+            })
+            .catch(err => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                console.error("Error rejecting request:", err);
+                alert("Error rejecting request. Please try again.");
             });
         }
 
