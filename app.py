@@ -742,6 +742,7 @@ def get_column_map():
     mapping = load_column_map()
     return jsonify(mapping or {})
 
+@csrf.exempt
 @app.route("/save_column_map", methods=["POST"])
 @role_required("admin")
 def save_mapping():
@@ -763,6 +764,7 @@ def save_mapping():
     except Exception as e:
         return jsonify({"error": f"Server error: {str(e)}"}), 500
 
+@csrf.exempt
 @app.route("/set_event_code", methods=["POST"])
 @role_required("admin")
 def set_event_code():
@@ -835,6 +837,7 @@ def get_event_requirements():
     print(f"DEBUG: Final requirements for '{event}': {requirements}")
     return jsonify(requirements)
 
+@csrf.exempt
 @app.route("/add_college", methods=["POST"])
 def add_college():
     """Add a new college to the list"""
@@ -868,6 +871,7 @@ def add_college():
     except Exception as e:
         return jsonify({"success": False, "error": "Failed to save college"}), 500
 
+@csrf.exempt
 @app.route("/update_college", methods=["POST"])
 def update_college():
     """Update college for a specific registration"""
@@ -1118,6 +1122,7 @@ def get_event_codes_admin():
     except Exception as e:
         return jsonify({})
 
+@csrf.exempt
 @app.route("/save_event_codes_admin", methods=["POST"])
 @role_required("admin")
 def save_event_codes_admin():
@@ -1147,6 +1152,7 @@ def save_event_codes_admin():
         traceback.print_exc()
         return jsonify({"error": f"Failed to save event codes: {str(e)}"}), 500
 
+@csrf.exempt
 @app.route("/change_user_password", methods=["POST"])
 @role_required("admin", "super_admin")
 def change_user_password():
@@ -1277,6 +1283,7 @@ def get_registration():
 
 
 
+@csrf.exempt
 @app.route("/update_team_members", methods=["POST"])
 def update_team_members():
     reg_no = request.json.get("reg_no")
@@ -1575,8 +1582,9 @@ def get_reported_teams():
 # --------------------------------------------------
 # 📱 REQUEST EVENT START (COORDINATOR)
 # --------------------------------------------------
-@event_verified_required
+@csrf.exempt
 @app.route("/request_event_start", methods=["POST"])
+@event_verified_required
 def request_event_start():
     """Handle coordinator request to start an event"""
     try:
@@ -1647,8 +1655,9 @@ def get_event_requests():
 # --------------------------------------------------
 # ✅ APPROVE EVENT REQUEST (ADMIN)
 # --------------------------------------------------
-@role_required("admin", "super_admin")
+@csrf.exempt
 @app.route("/approve_event_request", methods=["POST"])
+@role_required("admin", "super_admin")
 def approve_event_request():
     """Approve an event start request"""
     try:
@@ -1702,8 +1711,9 @@ def approve_event_request():
 # --------------------------------------------------
 # ❌ REJECT EVENT REQUEST (ADMIN)
 # --------------------------------------------------
-@role_required("admin", "super_admin")
+@csrf.exempt
 @app.route("/reject_event_request", methods=["POST"])
+@role_required("admin", "super_admin")
 def reject_event_request():
     """Reject an event start request"""
     try:
@@ -1815,8 +1825,9 @@ def end_event():
 # --------------------------------------------------
 # � DOWNLOAD EVENT PARTICIPANTS PDF (PROTECTED)
 # --------------------------------------------------
-@event_verified_required
+@csrf.exempt
 @app.route("/download_event_pdf", methods=["POST"])
+@event_verified_required
 def download_event_pdf():
     data = request.get_json(silent=True) or {}
     event = data.get("event")
@@ -2015,6 +2026,7 @@ def download_event_pdf():
 # --------------------------------------------------
 # �� RESET WINNERS (SUPER ADMIN ONLY)
 # --------------------------------------------------
+@csrf.exempt
 @app.route("/reset_winners", methods=["POST"])
 @role_required("super_admin")
 def reset_winners():
@@ -2094,6 +2106,7 @@ def completed_events():
 def get_event_ratings():
     return jsonify(load_event_ratings())
 
+@csrf.exempt
 @app.route("/set_event_rating", methods=["POST"])
 def set_event_rating():
     event = request.json.get("event")
@@ -2448,6 +2461,7 @@ def submit_spot_registration():
 
 # ---------------- ADMIN OPTIONS ---------------- #
 
+@csrf.exempt
 @app.route("/check_event_start_permission", methods=["POST"])
 @event_verified_required
 def check_event_start_permission():
@@ -2491,6 +2505,7 @@ def check_event_start_permission():
     except Exception as e:
         return jsonify({"error": f"Failed to check permission: {str(e)}"}), 500
 
+@csrf.exempt
 @app.route("/reset_all_events", methods=["POST"])
 @role_required("admin")
 def reset_all_events():
@@ -2519,6 +2534,7 @@ def reset_all_events():
     except Exception as e:
         return jsonify({"error": f"Failed to reset all events: {str(e)}"}), 500
 
+@csrf.exempt
 @app.route("/toggle_event_start", methods=["POST"])
 @role_required("admin")
 def toggle_event_start():
@@ -2565,6 +2581,7 @@ def toggle_event_start():
     except Exception as e:
         return jsonify({"error": f"Failed to toggle event start: {str(e)}"}), 500
 
+@csrf.exempt
 @app.route("/upload_excel", methods=["POST"])
 def upload_excel():
     """Upload and replace the Excel file"""
@@ -2619,6 +2636,7 @@ def upload_excel():
     except Exception as e:
         return jsonify({"error": f"Failed to upload Excel file: {str(e)}"}), 500
 
+@csrf.exempt
 @app.route("/reset_status", methods=["POST"])
 def reset_status():
     """Reset all status data"""
