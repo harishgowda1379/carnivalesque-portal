@@ -188,7 +188,28 @@ def page_role_required(*allowed_roles):
 
 # ---------------- UTILITIES ---------------- #
 
+# Global cache variables
+_excel_cache = None
+_excel_cache_time = None
+_column_map_cache = None
+_status_cache = None
+CACHE_TIMEOUT = 300  # 5 minutes cache timeout
+
 def load_excel():
+    """Load Excel file with caching to improve performance"""
+    global _excel_cache, _excel_cache_time
+    
+    current_time = time.time()
+    
+    # Return cached data if still valid
+    if (_excel_cache is not None and 
+        _excel_cache_time is not None and 
+        current_time - _excel_cache_time < CACHE_TIMEOUT):
+        print("DEBUG: Using cached Excel data")
+        return _excel_cache
+    
+    print("DEBUG: Loading Excel from disk (cache expired)")
+    
     # Validate file path and size
     if not os.path.exists(EXCEL_PATH):
         raise FileNotFoundError("Excel file not found")
@@ -203,39 +224,64 @@ def load_excel():
     if not real_path.startswith(allowed_dir):
         raise ValueError("Invalid file path")
     
-    return pd.read_excel(EXCEL_PATH)
+    # Load and cache the data
+    _excel_cache = pd.read_excel(EXCEL_PATH)
+    _excel_cache_time = current_time
+    
+    return _excel_cache
 
 def load_column_map():
+    """Load column mapping with caching"""
+    global _column_map_cache
+    
+    if _column_map_cache is not None:
+        return _column_map_cache
+    
     if not os.path.exists(COLUMN_MAP_PATH):
         return None
+    
     with open(COLUMN_MAP_PATH, "r") as f:
-        return json.load(f)
-
-def save_column_map(data):
-    with portalocker.Lock(COLUMN_MAP_PATH, 'w') as f:
-        json.dump(data, f, indent=4)
+        _column_map_cache = json.load(f)
+    
+    return _column_map_cache
 
 def load_status():
+    """Load status with caching"""
+    global _status_cache
+    
+    if _status_cache is not None:
+        return _status_cache
+    
     if not os.path.exists(STATUS_PATH):
         with open(STATUS_PATH, "w") as f:
             json.dump({}, f)
-        return {}
+        _status_cache = {}
+        return _status_cache
+    
+    with open(STATUS_PATH, "r") as f:
+        _status_cache = json.load(f)
+    
+    return _status_cache
 
-    try:
-        with open(STATUS_PATH, "r") as f:
-            content = f.read().strip()
-            return json.loads(content) if content else {}
-    except json.JSONDecodeError:
-        with open(STATUS_PATH, "w") as f:
-            json.dump({}, f)
-        return {}
+def invalidate_cache():
+    """Invalidate all caches when data is modified"""
+    global _excel_cache, _excel_cache_time, _column_map_cache, _status_cache
+    _excel_cache = None
+    _excel_cache_time = None
+    _column_map_cache = None
+    _status_cache = None
+    print("DEBUG: Cache invalidated")
 
-def save_status(data):
-    with portalocker.Lock(STATUS_PATH, 'w') as f:
+def save_column_map(data):
+    os.makedirs(os.path.dirname(COLUMN_MAP_PATH), exist_ok=True)
+    with portalocker.Lock(COLUMN_MAP_PATH, 'w') as f:
         json.dump(data, f, indent=4)
+    # Invalidate cache when column map is updated
+    invalidate_cache()
 
 def load_event_codes():
     # Load codes from file, or initialize with defaults
+    # ... (rest of the code remains the same)
     if not os.path.exists(EVENT_CODES_PATH):
         # If file doesn't exist, initialize with default codes
         if DEFAULT_EVENT_CODES:
