@@ -555,6 +555,18 @@ def save_event_ratings(data):
     with portalocker.Lock(EVENT_RATINGS_PATH, 'w') as f:
         json.dump(data, f, indent=4)
 
+def load_event_ratings():
+    """Load event ratings from JSON file"""
+    if not os.path.exists(EVENT_RATINGS_PATH):
+        # Return default ratings if file doesn't exist
+        return {}
+    try:
+        with open(EVENT_RATINGS_PATH, "r") as f:
+            content = f.read().strip()
+            return json.loads(content) if content else {}
+    except json.JSONDecodeError:
+        return {}
+
 # Points system based on star rating
 POINTS_SYSTEM = {
     5: {"1st": 80, "2nd": 75, "3rd": 70},
@@ -2126,120 +2138,133 @@ def set_event_rating():
 @app.route("/super_admin_dashboard")
 @role_required("super_admin")
 def super_admin_dashboard():
-    df = load_excel()
-    mapping = load_column_map()
-    status = load_status()
-    ratings = load_event_ratings()
-
-    events = {}
-
-    # First, get all events from Excel file (source of truth)
-    if mapping and mapping.get("event") in df.columns:
-        excel_events = df[mapping["event"]].dropna().unique().tolist()
-        excel_events = [e for e in excel_events if str(e).strip()]  # Remove empty values
+    try:
+        print("DEBUG: Loading super admin dashboard...")
+        df = load_excel()
+        mapping = load_column_map()
+        status = load_status()
+        ratings = load_event_ratings()
         
-        # Initialize all events with default values
-        for event in excel_events:
-            events[event] = {
-                "event_started": False,
-                "event_ended": False,
-                "winners": {},
-                "rating": ratings.get(event, 3)  # Default to 3 stars
-            }
+        print(f"DEBUG: Status loaded: {status}")
+        print(f"DEBUG: Ratings loaded: {ratings}")
+        print(f"DEBUG: Excel shape: {df.shape}")
+        print(f"DEBUG: Mapping: {mapping}")
 
-    # Then, update with status information
-    for reg_no, data in status.items():
-        event = data.get("event")
-        if not event:
-            continue
+        events = {}
+        
+        # First, get all events from Excel file (source of truth)
+        if mapping and mapping.get("event") in df.columns:
+            excel_events = df[mapping["event"]].dropna().unique().tolist()
+            excel_events = [e for e in excel_events if str(e).strip()]  # Remove empty values
+            
+            # Initialize all events with default values
+            for event in excel_events:
+                events[event] = {
+                    "event_started": False,
+                    "event_ended": False,
+                    "winners": {},
+                    "rating": ratings.get(event, 3)  # Default to 3 stars
+                }
 
-        # Only process events that exist in our events dict
-        if event not in events:
-            continue
+        # Then, update with status information
+        for reg_no, data in status.items():
+            event = data.get("event")
+            if not event:
+                continue
 
-        if data.get("event_started"):
-            events[event]["event_started"] = True
+            # Only process events that exist in our events dict
+            if event not in events:
+                events[event] = {
+                    "event_started": False,
+                    "event_ended": False,
+                    "winners": {},
+                    "rating": ratings.get(event, 3)
+                }
 
-        if data.get("event_ended"):
-            events[event]["event_ended"] = True
+            # Update event status
+            if data.get("event_started"):
+                events[event]["event_started"] = True
+            if data.get("event_ended"):
+                events[event]["event_ended"] = True
+            if "winners" in data:
+                events[event]["winners"] = data["winners"]
 
-        if "position" in data:
-            row = df[df[mapping["reg_no"]] == reg_no]
-            team = []
-            college = ""
-            if not row.empty:
-                row0 = row.iloc[0]
-                team = extract_team(row0, mapping)
-                try:
-                    if mapping.get("college") and mapping["college"] in row0:
-                        college = str(row0[mapping["college"]]) if pd.notna(row0[mapping["college"]]) else ""
-                except Exception:
-                    college = ""
-
-            events[event]["winners"][data["position"]] = {
-                "reg_no": reg_no,
-                "team": team,
-                "college": college
-            }
-
-    return jsonify(events)
+        print(f"DEBUG: Final events data: {events}")
+        return jsonify(events)
+        
+    except Exception as e:
+        print(f"ERROR in super_admin_dashboard: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Failed to load dashboard: {str(e)}"}), 500
 
 @app.route("/calculate_champion")
 @role_required("super_admin")
 def calculate_champion():
-    status = load_status()
-    ratings = load_event_ratings()
-    df = load_excel()
-    mapping = load_column_map()
-    
-    college_points = {}
-    
-    for reg_no, data in status.items():
-        if not data.get("event_ended") or "position" not in data:
-            continue
+    try:
+        print("DEBUG: Calculating champion...")
+        status = load_status()
+        ratings = load_event_ratings()
+        df = load_excel()
+        mapping = load_column_map()
         
-        event = data.get("event")
-        position = data.get("position")
-        rating = ratings.get(event, 3)  # Default to 3 stars
+        print(f"DEBUG: Status for champion calc: {status}")
+        print(f"DEBUG: Ratings for champion calc: {ratings}")
         
-        # Get college name
-        college = ""
-        try:
-            row = df[df[mapping["reg_no"]] == reg_no]
-            if not row.empty:
-                college = str(row.iloc[0][mapping["college"]]) if pd.notna(row.iloc[0][mapping["college"]]) else ""
-        except:
-            pass
+        college_points = {}
         
-        if not college:
-            continue
+        for reg_no, data in status.items():
+            if not data.get("event_ended") or "position" not in data:
+                continue
+            
+            event = data.get("event")
+            position = data.get("position")
+            rating = ratings.get(event, 3)  # Default to 3 stars
+            
+            # Get college name
+            college = ""
+            try:
+                row = df[df[mapping["reg_no"]] == reg_no]
+                if not row.empty:
+                    college = str(row.iloc[0][mapping["college"]]) if pd.notna(row.iloc[0][mapping["college"]]) else ""
+            except:
+                pass
+            
+            if not college:
+                continue
+            
+            # Calculate points
+            points = POINTS_SYSTEM.get(rating, POINTS_SYSTEM[3])
+            position_key = "1st" if position == 1 else "2nd" if position == 2 else "3rd"
+            points_awarded = points.get(position_key, 0)
+            
+            college_points.setdefault(college, {"total": 0, "wins": []})
+            college_points[college]["total"] += points_awarded
+            college_points[college]["wins"].append({
+                "event": event,
+                "position": position,
+                "points": points_awarded,
+                "rating": rating
+            })
         
-        # Calculate points
-        points = POINTS_SYSTEM.get(rating, POINTS_SYSTEM[3])
-        position_key = "1st" if position == 1 else "2nd" if position == 2 else "3rd"
-        points_awarded = points.get(position_key, 0)
+        # Sort by total points
+        sorted_colleges = sorted(college_points.items(), key=lambda x: x[1]["total"], reverse=True)
         
-        college_points.setdefault(college, {"total": 0, "wins": []})
-        college_points[college]["total"] += points_awarded
-        college_points[college]["wins"].append({
-            "event": event,
-            "position": position,
-            "points": points_awarded,
-            "rating": rating
-        })
+        result = []
+        for college, data in sorted_colleges:
+            result.append({
+                "college": college,
+                "total_points": data["total"],
+                "wins": data["wins"]
+            })
+        
+        return jsonify({"champions": result})
     
-    # Sort by total points
-    sorted_colleges = sorted(college_points.items(), key=lambda x: x[1]["total"], reverse=True)
-    
-    result = []
-    for college, data in sorted_colleges:
-        result.append({
-            "college": college,
-            "total_points": data["total"],
-            "wins": data["wins"]
-        })
-    
-    return jsonify({"champions": result})
+    except Exception as e:
+        print(f"Error calculating champion: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "Failed to calculate champion"}), 500
 
 # ---------- SPOT REGISTRATION ---------- #
 
