@@ -1313,33 +1313,90 @@ def update_team_members():
 @csrf.exempt
 @app.route("/mark_reported", methods=["POST"])
 def mark_reported():
-    reg_no = request.json["reg_no"]
+    try:
+        # Validate request data
+        if not request.json or "reg_no" not in request.json:
+            return jsonify({"error": "Registration number required"}), 400
+            
+        reg_no = request.json["reg_no"]
+        print(f"DEBUG: Processing mark_reported for reg_no: {reg_no}")
 
-    df = load_excel()
-    mapping = load_column_map()
-    status = load_status()
+        # Load data with error handling
+        try:
+            df = load_excel()
+            print(f"DEBUG: Excel loaded successfully, shape: {df.shape}")
+        except Exception as e:
+            print(f"ERROR: Failed to load Excel: {e}")
+            return jsonify({"error": f"Failed to load registration data: {str(e)}"}), 500
+            
+        try:
+            mapping = load_column_map()
+            print(f"DEBUG: Column mapping loaded: {mapping}")
+        except Exception as e:
+            print(f"ERROR: Failed to load column mapping: {e}")
+            return jsonify({"error": f"Failed to load column mapping: {str(e)}"}), 500
+            
+        try:
+            status = load_status()
+            print(f"DEBUG: Status loaded, entries: {len(status)}")
+        except Exception as e:
+            print(f"ERROR: Failed to load status: {e}")
+            return jsonify({"error": f"Failed to load status data: {str(e)}"}), 500
 
-    row = df[df[mapping["reg_no"]] == reg_no]
-    if row.empty:
-        return jsonify({"error": "Registration not found"})
+        # Validate column mapping
+        if not mapping or "reg_no" not in mapping or "event" not in mapping:
+            print(f"ERROR: Invalid column mapping: {mapping}")
+            return jsonify({"error": "Column mapping not configured properly"}), 500
 
-    event = row.iloc[0][mapping["event"]]
+        # Find registration
+        print(f"DEBUG: Searching for reg_no '{reg_no}' in column '{mapping['reg_no']}'")
+        row = df[df[mapping["reg_no"]] == reg_no]
+        print(f"DEBUG: Found {len(row)} matching rows")
+        
+        if row.empty:
+            print(f"ERROR: Registration not found: {reg_no}")
+            return jsonify({"error": "Registration not found"}), 404
 
-    # 🔒 EVENT LOCK CHECK
-    for s in status.values():
-        if s.get("event") == event and s.get("event_ended"):
-            return jsonify({"error": "Event already completed. Reporting locked."})
+        # Get event
+        try:
+            event = row.iloc[0][mapping["event"]]
+            print(f"DEBUG: Found event: {event}")
+        except Exception as e:
+            print(f"ERROR: Failed to get event: {e}")
+            return jsonify({"error": "Failed to determine event"}), 500
 
-    status.setdefault(reg_no, {})
-    status[reg_no].update({
-        "event": event,
-        "reported": True,
-        "event_started": False,
-        "event_ended": False
-    })
+        # 🔒 EVENT LOCK CHECK
+        for s in status.values():
+            if s.get("event") == event and s.get("event_ended"):
+                print(f"ERROR: Event {event} already completed")
+                return jsonify({"error": "Event already completed. Reporting locked."}), 400
 
-    save_status(status)
-    return jsonify({"success": True})
+        # Update status
+        status.setdefault(reg_no, {})
+        status[reg_no].update({
+            "event": event,
+            "reported": True,
+            "event_started": False,
+            "event_ended": False
+        })
+        print(f"DEBUG: Updated status for {reg_no}")
+
+        # Save status
+        try:
+            save_status(status)
+            print(f"DEBUG: Status saved successfully")
+        except Exception as e:
+            print(f"ERROR: Failed to save status: {e}")
+            return jsonify({"error": f"Failed to save status: {str(e)}"}), 500
+
+        print(f"DEBUG: mark_reported completed successfully for {reg_no}")
+        return jsonify({"success": True})
+        
+    except Exception as e:
+        print(f"ERROR: Unexpected error in mark_reported: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 # ---------- EVENT COORDINATOR ---------- #
 
