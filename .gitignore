@@ -1,5 +1,4 @@
 # Runtime data files - should not be committed
-data/status.json
 data/event_requests.json
 data/registrations.xlsx.lock
 data/~$*.xlsx
