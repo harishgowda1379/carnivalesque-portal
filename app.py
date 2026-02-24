@@ -2311,6 +2311,8 @@ def submit_spot_registration():
     """Handle spot registration form submission and write to Excel"""
     try:
         data = request.get_json(silent=True) or request.form
+        print(f"DEBUG: Raw request data: {data}")
+        print(f"DEBUG: Request data type: {type(data)}")
         
         event = data.get("event", "").strip()
         college = data.get("college", "").strip()
@@ -2321,47 +2323,88 @@ def submit_spot_registration():
         team_leader = data.get("team_leader", "").strip()
         team_members = data.get("team_members", [])
         
+        print(f"DEBUG: Parsed data - Event: '{event}', College: '{college}', College Other: '{college_other}'")
+        print(f"DEBUG: Contact: '{contact}', Email: '{email}', Reg No: '{reg_no}'")
+        print(f"DEBUG: Team Leader: '{team_leader}', Team Members: {team_members}")
+        
         # Filter out empty team members
         team_members = [m.strip() for m in team_members if m and m.strip()]
+        print(f"DEBUG: Filtered team members: {team_members}")
         
         # Validation with specific error messages
         if not event:
+            print(f"DEBUG: Validation failed - Event is empty")
             return jsonify({"error": "Event name is required. Please select an event."}), 400
         if not college:
+            print(f"DEBUG: Validation failed - College is empty")
             return jsonify({"error": "College name is required"}), 400
         if not contact:
+            print(f"DEBUG: Validation failed - Contact is empty")
             return jsonify({"error": "Contact number is required"}), 400
         if not email:
+            print(f"DEBUG: Validation failed - Email is empty")
             return jsonify({"error": "Email address is required"}), 400
         if not reg_no:
+            print(f"DEBUG: Validation failed - Reg No is empty")
             return jsonify({"error": "Registration number is required"}), 400
+        
+        # Validate registration number format
+        if not reg_no.startswith("C26") or len(reg_no) != 8:
+            print(f"DEBUG: Validation failed - Invalid reg number format: {reg_no}")
+            return jsonify({"error": "Registration number must be C26 followed by 4 digits (e.g., C261234)"}), 400
+        
+        # Validate email format
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            print(f"DEBUG: Validation failed - Invalid email format: {email}")
+            return jsonify({"error": "Please enter a valid email address"}), 400
         
         # Validate team requirements
         requirements = EVENT_TEAM_REQUIREMENTS.get(event, {"min": 1, "max": 20})
         min_members = requirements["min"]
         max_members = requirements["max"]
+        print(f"DEBUG: Event requirements for '{event}': min={min_members}, max={max_members}")
         
         # If it's a team event (max > 1), require team leader
         if max_members > 1 and not team_leader:
+            print(f"DEBUG: Validation failed - Team event with max={max_members} but no team leader")
             return jsonify({"error": "Team leader name is required for team events"}), 400
         
         # Validate team size
         team_size = len(team_members)
+        print(f"DEBUG: Team validation - size={team_size}, min={min_members}, max={max_members}")
         if team_size < min_members:
+            print(f"DEBUG: Validation failed - Team size {team_size} < min {min_members}")
             return jsonify({"error": f"This event requires at least {min_members} team member{'s' if min_members > 1 else ''}"}), 400
         if team_size > max_members:
+            print(f"DEBUG: Validation failed - Team size {team_size} > max {max_members}")
             return jsonify({"error": f"This event allows maximum {max_members} team member{'s' if max_members > 1 else ''}"}), 400
         
         # Load existing Excel and column mapping
+        print(f"DEBUG: Loading Excel file and column mapping...")
         df = load_excel()
         mapping = load_column_map()
+        print(f"DEBUG: Excel loaded with shape: {df.shape}")
+        print(f"DEBUG: Column mapping: {mapping}")
         
         if not mapping:
+            print(f"DEBUG: Column mapping is None/empty")
             return jsonify({"error": "Column mapping not configured. Please contact admin."}), 500
         
         # Check if registration number already exists
-        if reg_no in df[mapping["reg_no"]].values:
-            return jsonify({"error": "Registration number already exists"}), 400
+        print(f"DEBUG: Checking if registration number '{reg_no}' already exists...")
+        reg_column = mapping["reg_no"]
+        if reg_column in df.columns:
+            existing_regs = df[reg_column].astype(str).str.strip()
+            if reg_no in existing_regs.values:
+                print(f"DEBUG: Registration number '{reg_no}' already exists in Excel")
+                return jsonify({"error": "Registration number already exists"}), 400
+            else:
+                print(f"DEBUG: Registration number '{reg_no}' is unique")
+        else:
+            print(f"DEBUG: Registration column '{reg_column}' not found in Excel")
+            return jsonify({"error": "Registration column not found in Excel. Please contact admin."}), 500
         
         # Create new row data
         new_row = {}
