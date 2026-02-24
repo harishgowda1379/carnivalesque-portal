@@ -1,0 +1,28 @@
+# Runtime data files - should not be committed
+data/status.json
+data/event_requests.json
+data/registrations.xlsx.lock
+data/~$*.xlsx
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
