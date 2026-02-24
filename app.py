@@ -262,8 +262,37 @@ def load_event_codes():
         return DEFAULT_EVENT_CODES.copy()
 
 def save_event_codes(data):
-    with portalocker.Lock(EVENT_CODES_PATH, 'w') as f:
-        json.dump(data, f, indent=4)
+    """Save event codes to JSON file with proper error handling"""
+    try:
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(EVENT_CODES_PATH), exist_ok=True)
+        
+        # Create backup before saving
+        if os.path.exists(EVENT_CODES_PATH):
+            backup_path = EVENT_CODES_PATH + '.backup'
+            try:
+                import shutil
+                shutil.copy2(EVENT_CODES_PATH, backup_path)
+            except:
+                pass  # Ignore backup errors
+        
+        # Save with file locking
+        with portalocker.Lock(EVENT_CODES_PATH, 'w', timeout=10) as f:
+            json.dump(data, f, indent=4)
+            
+        print(f"Successfully saved {len(data)} event codes to {EVENT_CODES_PATH}")
+        
+    except portalocker.exceptions.LockException as e:
+        print(f"Lock error saving event codes: {e}")
+        raise Exception(f"File is locked: {str(e)}")
+    except PermissionError as e:
+        print(f"Permission error saving event codes: {e}")
+        raise Exception(f"Permission denied: {str(e)}")
+    except Exception as e:
+        print(f"Unexpected error saving event codes: {e}")
+        import traceback
+        traceback.print_exc()
+        raise Exception(f"Failed to save event codes: {str(e)}")
 
 def load_event_ratings():
     if not os.path.exists(EVENT_RATINGS_PATH):
@@ -845,12 +874,24 @@ def save_event_codes_admin():
         if not data:
             return jsonify({"error": "No codes provided"}), 400
         
+        # Debug: Log the data being saved
+        print(f"DEBUG: Saving event codes data: {data}")
+        
         # Save the codes
         save_event_codes(data)
         
         return jsonify({"success": True, "message": f"Saved {len(data)} event codes"})
+    except PermissionError as e:
+        print(f"Permission error saving event codes: {e}")
+        return jsonify({"error": f"Permission denied: {str(e)}"}), 500
+    except FileNotFoundError as e:
+        print(f"File not found error saving event codes: {e}")
+        return jsonify({"error": f"File not found: {str(e)}"}), 500
     except Exception as e:
-        return jsonify({"error": "Failed to save event codes"}), 500
+        print(f"Error saving event codes: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Failed to save event codes: {str(e)}"}), 500
 
 @app.route("/change_user_password", methods=["POST"])
 @role_required("admin", "super_admin")
