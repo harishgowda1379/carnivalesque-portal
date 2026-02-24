@@ -1200,15 +1200,29 @@
         })
         .then(res => {
             console.log("Response status:", res.status);
+            console.log("Response headers:", res.headers);
+            
             if (!res.ok) {
                 // Try to get error details from response
                 return res.text().then(text => {
                     console.log("Error response text:", text);
+                    console.log("Response type:", res.headers.get('content-type'));
+                    
                     try {
                         const errorData = JSON.parse(text);
-                        throw new Error(errorData.error || `HTTP ${res.status}`);
-                    } catch (e) {
-                        throw new Error(`Registration failed with status ${res.status}`);
+                        console.log("Parsed error data:", errorData);
+                        const errorMessage = errorData.error || errorData.message || `HTTP ${res.status}`;
+                        throw new Error(errorMessage);
+                    } catch (parseError) {
+                        console.log("Failed to parse error as JSON:", parseError);
+                        // If it's not JSON, try to extract error message from HTML
+                        if (text.includes("error")) {
+                            const match = text.match(/error[:\s]*([^<\n]+)/i);
+                            if (match) {
+                                throw new Error(match[1].trim());
+                            }
+                        }
+                        throw new Error(`Registration failed with status ${res.status}: ${text.substring(0, 200)}`);
                     }
                 });
             }
@@ -1239,27 +1253,22 @@
             console.error("Registration error:", err);
             console.error("Full error details:", err);
             
-            // Show specific error message
-            let errorMessage = "Registration failed. Please try again.";
-            if (err.message) {
-                if (err.message.includes("429")) {
-                    errorMessage = "Too many requests. Please wait a moment and try again.";
-                } else if (err.message.includes("500")) {
-                    errorMessage = "Server error. Please try again in a few moments.";
-                } else if (err.message.includes("400")) {
-                    errorMessage = "Invalid data. Please check all fields and try again.";
-                } else if (err.message.includes("403")) {
-                    errorMessage = "Access denied. Please refresh the page and try again.";
-                } else {
-                    errorMessage = err.message;
-                }
-            }
+            // Show specific error message from backend
+            let errorMessage = err.message || "Registration failed. Please try again.";
+            
+            // Don't override the backend error message with generic ones
+            // Just use the actual error message from the backend
+            console.log("Displaying error message to user:", errorMessage);
             
             errorDiv.textContent = errorMessage;
             errorDiv.style.display = "block";
             submitBtn.disabled = false;
             submitBtn.textContent = "Submit Registration";
+            
+            // Scroll to top to show error
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
+
     }
 
     // Registration number input formatting
