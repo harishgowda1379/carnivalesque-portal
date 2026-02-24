@@ -1310,6 +1310,7 @@ def update_team_members():
 
     return jsonify({"success": True, "team_size": len(cleaned)})
 
+@csrf.exempt
 @app.route("/mark_reported", methods=["POST"])
 def mark_reported():
     reg_no = request.json["reg_no"]
