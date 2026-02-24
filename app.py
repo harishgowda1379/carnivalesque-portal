@@ -60,6 +60,8 @@ EVENT_TEAM_REQUIREMENTS = {
     # 5 Star Events
     "Fashion Walk": {"min": 10, "max": 12},
     "Football - Men": {"min": 7, "max": 12},
+    "Football (Men)": {"min": 7, "max": 12},
+    "Football (Women)": {"min": 7, "max": 12},
     
     # 4 Star Events
     "Battle of Bands": {"min": 8, "max": 10},
@@ -67,7 +69,11 @@ EVENT_TEAM_REQUIREMENTS = {
     "Throw Ball - M&W": {"min": 9, "max": 12},
     "Kabaddi - M&W": {"min": 7, "max": 12},
     "Tug of War - M&W": {"min": 8, "max": 10},
+    "Tug of War (Men)": {"min": 8, "max": 10},
+    "Tug of War (Women)": {"min": 8, "max": 10},
     "Volley Ball - Men": {"min": 6, "max": 9},
+    "Volley Ball (Men)": {"min": 6, "max": 9},
+    "Volley Ball (Women)": {"min": 6, "max": 9},
     "Group Singing": {"min": 6, "max": 8},
     "Mime": {"min": 6, "max": 8},
     
@@ -803,23 +809,30 @@ def get_event_requirements():
     if len(event) > 100:
         return jsonify({"error": "Invalid event name length"}), 400
     
+    print(f"DEBUG: Looking up requirements for event: '{event}'")
+    print(f"DEBUG: Available events: {list(EVENT_TEAM_REQUIREMENTS.keys())}")
+    
     requirements = None
     event_lower = event.lower()
     
     # Try exact match first
     if event in EVENT_TEAM_REQUIREMENTS:
         requirements = EVENT_TEAM_REQUIREMENTS[event]
+        print(f"DEBUG: Exact match found for '{event}': {requirements}")
     else:
         # Try case-insensitive match
         for key, value in EVENT_TEAM_REQUIREMENTS.items():
             if key.lower() == event_lower:
                 requirements = value
+                print(f"DEBUG: Case-insensitive match found: '{event}' -> '{key}': {requirements}")
                 break
     
     # If still not found, use default
     if not requirements:
+        print(f"DEBUG: No match found for '{event}', using default")
         requirements = {"min": 1, "max": 20}
     
+    print(f"DEBUG: Final requirements for '{event}': {requirements}")
     return jsonify(requirements)
 
 @app.route("/add_college", methods=["POST"])
