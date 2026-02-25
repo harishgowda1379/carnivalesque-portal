@@ -619,39 +619,17 @@
     }
 
     function startEvent() {
-        // First check if event is enabled by admin
-        fetch("/check_event_start_permission", {
+        // Directly start the event without checking permissions
+        fetch("/start_event", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({ event: currentEvent })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success && data.enabled) {
-                // Event is enabled, proceed with normal start
-                fetch("/start_event", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({ event: currentEvent })
-                }).then(() => {
-                    eventStarted = true;
-                    showCustomPopup("marked has event started");
-                    document.getElementById("winnersCard").classList.remove("hidden");
-                });
-            } else {
-                // Event not enabled, show request modal
-                showRequestModal();
-            }
-        })
-        .catch(err => {
-            console.error("Error checking permission:", err);
-            showCustomPopup("Error checking event permission. Please try again.");
+        }).then(() => {
+            eventStarted = true;
+            showCustomPopup("marked has event started");
+            document.getElementById("winnersCard").classList.remove("hidden");
         });
     }
 

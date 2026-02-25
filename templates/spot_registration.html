@@ -1239,6 +1239,12 @@
                 successDiv.textContent = data.message || "Registration successful! Your data has been added.";
                 successDiv.style.display = "block";
                 
+                // Auto-hide success message after 5 seconds
+                setTimeout(() => {
+                    successDiv.style.display = "none";
+                    successDiv.textContent = "";
+                }, 5000);
+                
                 // Reset form
                 document.getElementById("spotRegForm").reset();
                 

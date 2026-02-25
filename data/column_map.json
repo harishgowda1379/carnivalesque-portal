@@ -1,11 +1,10 @@
 {
     "reg_no": "Registration No",
-    "event": "24Feb Events",
+    "event": "25Feb Events",
     "college": "College Name",
     "specify_college": "Specify College Name",
     "team_leader": "Participant-1",
     "contact": "Contact Phone",
-    "email": "Email",
     "team_members": [
         "Participant-1",
         "Participant-2",

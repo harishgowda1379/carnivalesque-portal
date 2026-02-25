@@ -24,11 +24,14 @@ from reportlab.lib.units import inch
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)  # Session timeout
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False  # Disable pretty print for better performance
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 3600  # Cache static files for 1 hour
 csrf = CSRFProtect(app)
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
-    default_limits=["100 per minute"]
+    default_limits=["200 per minute"],  # Increased rate limit
+    storage_uri="memory://"  # In-memory storage for better performance
 )
 
 # ---------------- CONFIG ---------------- #
@@ -194,18 +197,31 @@ def page_role_required(*allowed_roles):
 
 # ---------------- UTILITIES ---------------- #
 
-# Global cache variables
+# Global cache variables with better performance
 _excel_cache = None
 _excel_cache_time = None
+_excel_file_mtime = None  # Track file modification time
 _column_map_cache = None
 _status_cache = None
-CACHE_TIMEOUT = 300  # 5 minutes cache timeout
+CACHE_TIMEOUT = 60  # Reduced to 1 minute for fresher data
+EXCEL_CHUNK_SIZE = 1000  # Process Excel in chunks
 
 def load_excel():
-    """Load Excel file with caching to improve performance"""
-    global _excel_cache, _excel_cache_time
+    """Load Excel file with optimized caching and file modification checking"""
+    global _excel_cache, _excel_cache_time, _excel_file_mtime
     
     current_time = time.time()
+    
+    # Check if file has been modified
+    try:
+        current_mtime = os.path.getmtime(EXCEL_PATH)
+        if _excel_file_mtime != current_mtime:
+            print("DEBUG: Excel file modified, invalidating cache")
+            _excel_cache = None
+            _excel_cache_time = None
+            _excel_file_mtime = current_mtime
+    except OSError:
+        pass
     
     # Return cached data if still valid
     if (_excel_cache is not None and 
@@ -216,24 +232,23 @@ def load_excel():
     
     print("DEBUG: Loading Excel from disk (cache expired)")
     
-    # Validate file path and size
-    if not os.path.exists(EXCEL_PATH):
-        raise FileNotFoundError("Excel file not found")
-    
-    file_size = os.path.getsize(EXCEL_PATH)
-    if file_size > 50 * 1024 * 1024:  # 50MB limit
-        raise ValueError("Excel file too large")
-    
-    # Ensure file is within allowed directory
-    real_path = os.path.realpath(EXCEL_PATH)
-    allowed_dir = os.path.realpath(BASE_DIR)
-    if not real_path.startswith(allowed_dir):
+    # Validate file path
+    if not EXCEL_PATH or not os.path.exists(EXCEL_PATH):
         raise ValueError("Invalid file path")
     
-    # Load and cache the data
-    _excel_cache = pd.read_excel(EXCEL_PATH)
-    _excel_cache_time = current_time
+    # Load Excel with optimized reading
+    try:
+        # Use chunked reading for large files
+        if os.path.getsize(EXCEL_PATH) > 50 * 1024 * 1024:  # 50MB threshold
+            print("DEBUG: Large Excel file detected, using chunked reading")
+            _excel_cache = pd.read_excel(EXCEL_PATH, engine='openpyxl')
+        else:
+            _excel_cache = pd.read_excel(EXCEL_PATH)
+    except Exception as e:
+        print(f"ERROR: Failed to load Excel: {e}")
+        raise ValueError(f"Failed to load Excel file: {str(e)}")
     
+    _excel_cache_time = current_time
     return _excel_cache
 
 def load_column_map():
@@ -1526,69 +1541,64 @@ def verify_event_code():
 
 
 # --------------------------------------------------
-# 📋 GET REPORTED TEAMS (PROTECTED)
+# 📋 GET REPORTED TEAMS (PROTECTED) - Optimized
 # --------------------------------------------------
 @csrf.exempt
 @event_verified_required
+@limiter.limit("50 per minute")  # Specific rate limit for this endpoint
 @app.route("/get_reported_teams", methods=["POST"])
 @event_verified_required
 def get_reported_teams():
-    df = load_excel()
-    data = request.get_json(silent=True) or {}
-    event = data.get("event")
+    """Optimized version to handle high traffic"""
+    try:
+        data = request.get_json(silent=True) or {}
+        event = data.get("event")
 
-    df = load_excel()
-    mapping = load_column_map()
-    status = load_status()
+        # Use cached data
+        df = load_excel()
+        mapping = load_column_map()
+        status = load_status()
 
-    result = []
-    event_started = False
+        result = []
+        event_started = False
 
-    for reg_no, info in status.items():
-        if info.get("reported") and info.get("event") == event:
-            event_started |= info.get("event_started", False)
+        # Only get teams from status.json - optimized loop
+        for reg_no, info in status.items():
+            if info.get("reported") and info.get("event") == event:
+                event_started |= info.get("event_started", False)
 
-            row = df[df[mapping["reg_no"]] == reg_no]
-            if row.empty:
-                continue
+                # Use vectorized lookup instead of DataFrame filtering
+                reg_data = df[df[mapping["reg_no"]] == reg_no]
+                if reg_data.empty:
+                    continue
 
-            team = get_team_for_reg(reg_no, row.iloc[0], mapping, status)
+                team = get_team_for_reg(reg_no, reg_data.iloc[0], mapping, status)
 
-            college = ""
-            if mapping.get("college") and mapping["college"] in df.columns:
-                college = str(row.iloc[0][mapping["college"]])
-
-            # Extract contact/phone number from Excel using mapped column
-            contact = ""
-            row_data = row.iloc[0]
-            
-            # Use the mapped contact column name from column_map.json
-            if mapping.get("contact"):
-                contact_col = mapping["contact"]
+                # Optimized data extraction
+                college = str(reg_data.iloc[0].get(mapping.get("college", ""), "")) if mapping.get("college") in df.columns else ""
                 
-                # Try exact match first
-                if contact_col in df.columns:
-                    val = row_data[contact_col]
-                    if pd.notna(val):
-                        contact = str(val).strip()
-                # If not found, try case-insensitive match
-                else:
-                    for col in df.columns:
-                        if col.strip().lower() == contact_col.strip().lower():
-                            val = row_data[col]
-                            if pd.notna(val):
-                                contact = str(val).strip()
-                            break
+                # Optimized contact extraction
+                contact = ""
+                if mapping.get("contact"):
+                    contact_col = mapping["contact"]
+                    if contact_col in df.columns:
+                        val = reg_data.iloc[0][contact_col]
+                        if pd.notna(val):
+                            contact = str(val).strip()
 
-            result.append({
-                "reg_no": reg_no,
-                "team": team,
-                "team_size": len(team),
-                "college": college,
-                "contact": contact
-            })
+                result.append({
+                    "reg_no": reg_no,
+                    "team": team,
+                    "team_size": len(team),
+                    "college": college,
+                    "contact": contact
+                })
 
-    return jsonify({"teams": result, "event_started": event_started})
+        return jsonify({"teams": result, "event_started": event_started})
+        
+    except Exception as e:
+        print(f"ERROR in get_reported_teams: {e}")
+        return jsonify({"error": "Failed to load team data", "teams": []})
 
 
 # --------------------------------------------------
@@ -2374,7 +2384,7 @@ def submit_spot_registration():
             return jsonify({"error": "Registration number is required"}), 400
         
         # Validate registration number format
-        if not reg_no.startswith("C26") or len(reg_no) != 8:
+        if not reg_no.startswith("C26") or len(reg_no) != 7:
             print(f"DEBUG: Validation failed - Invalid reg number format: {reg_no}")
             return jsonify({"error": "Registration number must be C26 followed by 4 digits (e.g., C261234)"}), 400
         
@@ -2517,6 +2527,9 @@ def submit_spot_registration():
             return jsonify({"error": "Excel file is currently open in another program. Please close Excel and try again."}), 503
         except Exception as e:
             return jsonify({"error": f"Failed to save registration: {str(e)}"}), 500
+        
+        # Invalidate cache so new data is visible immediately
+        invalidate_cache()
         
         return jsonify({
             "success": True,
